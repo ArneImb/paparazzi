@@ -1,0 +1,41 @@
+Meeting 02/03
+
+Work breakdown structure:
+1. Vison obstacle avoidance
+  a) Look into monocular avoidance strategies
+    i) Detecting objects
+      - Research methods
+      - Bearing
+      - 
+    ii) Estimate distance
+      - Research methods
+      
+    iii) Flight path strategy
+    
+        - Look around for a longest straight path from a position
+        - Minimize time standing in one place
+        - Check twice if a path is ok
+
+2. Localization
+  - Initially try with optitrack, use onboard if time permits
+ 
+3. Writing a report
+  
+Planning:
+  Week 3:
+    - Gather data from bebop cameras
+    - Create folder on github for python
+    - Look into available modules for BEBOP
+    - Play around with orange avoidance module
+    - Play around with openCV in python
+    - Practice with GAZEBO
+  Week 4:
+    - Object detection implemented in the drone if possible with depth estimation
+  Week 5:
+    - Definitely finished with object detection and depth estimation
+    - Given data from vision generate paths
+  Week 6:
+    - Back up time
+  Week 7:
+    - Definitely finished
+  
