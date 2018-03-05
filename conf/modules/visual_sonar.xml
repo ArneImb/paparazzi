@@ -1,0 +1,16 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="visual_sonar" dir="course2018">
+  <doc>
+    <description>Obstacle avoid and detect module using a single camera. The module uses opencv functions.</description>
+  </doc>
+  <header>
+    <file name="visual_sonar.h"/>
+  </header>
+  <init fun="visual_sonar_init()"/>
+  <periodic fun="visual_sonar_periodic()" freq="4"/>
+  <makefile>
+    <file name="visual_sonar.c"/>
+  </makefile>
+</module>
+

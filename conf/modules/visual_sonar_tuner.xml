@@ -1,0 +1,23 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="visual_sonar" dir="course2018">
+  <doc>
+    <description>Object detection, range and avoidance algoritm using green floor in cyberzoo</description>
+    <define name="VISUAL_SONAR_LUM_MIN" value="0-255" description="Minimum Luminance To select pixel as object"/>
+    <define name="VISUAL_SONAR_LUM_MAX" value="0-255" description="Minimum Luminance To select pixel as object"/>
+    <define name="VISUAL_SONAR_CR_MIN" value="0-255" description="Minimum CR To select pixel as object"/>
+    <define name="VISUAL_SONAR_CR_MAX" value="0-255" description="Minimum CR To select pixel as object"/>
+    <define name="VISUAL_SONAR_CB_MIN" value="0-255" description="Minimum CB To select pixel as object"/>
+    <define name="VISUAL_SONAR_CB_MAX" value="0-255" description="Minimum CB To select pixel as object"/>
+  </doc>
+  <depends>cv_colorfilter.xml</depends>
+  <header>
+    <file name="visual_sonar_tuner.h"/>
+  </header>
+  <init fun="visual_sonar_init()"/>
+  <!--  <periodic fun="visual_sonar_periodic" freq="4"/> -->
+  <makefile>
+    <file name="visual_sonar_tuner.c"/>
+  </makefile>
+</module>
+
