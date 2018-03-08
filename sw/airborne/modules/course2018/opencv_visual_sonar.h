@@ -32,7 +32,9 @@
 extern "C" {
 #endif
 
-int opencv_YCbCr_filter(char *img, int width, int height);
+
+//extern uint16_t number_positives_square(Mat integral_img, uint16_t left, uint16_t right, uint16_t top, uint16_t bottom);
+extern int opencv_YCbCr_filter(char *img, int width, int height);
 
 #ifdef __cplusplus
 }

@@ -24,6 +24,7 @@
  */
 
 #include "opencv_visual_sonar.h"
+#include "opencv_visual_sonar.hpp"
 #include "visual_sonar.h"
 
 using namespace std;
@@ -31,6 +32,44 @@ using namespace std;
 #include <opencv2/imgproc/imgproc.hpp>
 using namespace cv;
 #include "modules/computer_vision/opencv_image_functions.h"
+
+uint16_t number_positives_square(Mat integral_img, uint16_t left, uint16_t right, uint16_t top, uint16_t bottom)
+{
+	uint16_t n_positives;
+	//int w = integral_img.size().width;
+	//int h = integral_img.size().height;
+
+	n_positives = (integral_img.at<uint32_t>(top,left)+integral_img.at<uint32_t>(bottom,right)) -
+				  (integral_img.at<uint32_t>(top,right)+integral_img.at<uint32_t>(bottom,left));   //(y,x)
+
+	return n_positives;
+}
+
+uint16_t pixels_to_go(Mat mask, int square_size, float threshold)
+{
+	int w = mask.size().width;
+	int h = mask.size().height;
+	uint16_t left_pos;
+	uint16_t square_area = square_size^2;
+	Mat bin_mask;
+	Mat integral_mask;
+	cv::threshold(mask, bin_mask, 127, 255, THRESH_BINARY);
+	integral(bin_mask,integral_mask);
+
+	uint16_t top_pos = (h-square_size)/2;
+	uint16_t bottom_pos = (h+square_size)/2;
+
+	for(left_pos = 0; left_pos<=w+square_size; left_pos += square_size)
+	{
+		uint16_t right_pos = left_pos + square_size;
+		uint16_t n_postives = number_positives_square(integral_mask, left_pos, right_pos, top_pos, bottom_pos);
+		if(n_postives < threshold*square_area)
+		{
+			break;
+		}
+	}
+	return left_pos;
+}
 
 int opencv_YCbCr_filter(char *img, int width, int height)
 {
