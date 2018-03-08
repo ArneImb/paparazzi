@@ -23,3 +23,19 @@
  * Object detection, range and avoidance algoritm using green floor in cyberzoo
  */
 
+
+
+#ifndef OPENCV_VISUAL_SONAR_H
+#define OPENCV_VISUAL_SONAR_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int opencv_YCbCr_filter(char *img, int width, int height);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

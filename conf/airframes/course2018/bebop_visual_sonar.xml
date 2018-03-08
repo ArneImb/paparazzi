@@ -55,10 +55,10 @@
       <define name="CV_AE_AWB_AV" value="1" />
       <define name="CV_AE_AWB_VERBOSE" value="0" />
     </module-->
-    <module name="cv_colorfilter">
-      <define name="COLORFILTER_CAMERA" value="front_camera" />
+    <module name="visual_sonar">
+      <define name="VISUAL_SONAR_CAMERA" value="front_camera" />
     </module>
-    <module name="visual_sonar_tuner" />
+    <!--  <module name="orange_avoider" /> -->
     <module name="video_rtp_stream">
       <define name="VIEWVIDEO_CAMERA" value="front_camera" />
       <define name="VIEWVIDEO_FPS" value="18" />
@@ -104,14 +104,14 @@
 
   <!-- Cyberzoo bebop1 values -->
   <section name="COLORFILTER" prefix="VISUAL_SONAR_">
-    <define name="LUM_MIN" value="80"/>
-    <define name="LUM_MAX" value="101"/>
-    <define name="CB_MIN" value="80"/>
-    <define name="CB_MAX" value="90"/>
-    <define name="CR_MIN" value="121"/>
-    <define name="CR_MAX" value="125"/>
+    <define name="MINY" value="73"/>
+    <define name="MAXY" value="110"/>
+    <define name="MINCB" value="80"/>
+    <define name="MAXCB" value="92"/>
+    <define name="MINCR" value="117"/>
+    <define name="MAXCR" value="125"/>
   </section>
-  
+
   <section name="AIR_DATA" prefix="AIR_DATA_">
     <define name="CALC_AIRSPEED" value="FALSE"/>
     <define name="CALC_TAS_FACTOR" value="FALSE"/>
@@ -263,3 +263,4 @@
     <define name="MAX_BAT_LEVEL" value="12.4" unit="V"/>
   </section>
 </airframe>
+

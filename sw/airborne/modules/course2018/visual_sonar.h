@@ -27,11 +27,11 @@
 #define VISUAL_SONAR_H
 
 #ifndef VISUAL_SONAR_MINY
-#define VISUAL_SONAR_MINY 80
+#define VISUAL_SONAR_MINY 73
 #endif
 
 #ifndef VISUAL_SONAR_MAXY
-#define VISUAL_SONAR_MAXY 101
+#define VISUAL_SONAR_MAXY 110
 #endif
 
 #ifndef VISUAL_SONAR_MINCB
@@ -39,19 +39,33 @@
 #endif
 
 #ifndef VISUAL_SONAR_MAXCB
-#define VISUAL_SONAR_MAXCB 90
+#define VISUAL_SONAR_MAXCB 92
 #endif
 
 #ifndef VISUAL_SONAR_MINCR
-#define VISUAL_SONAR_MINCR 121
+#define VISUAL_SONAR_MINCR 117
 #endif
 
 #ifndef VISUAL_SONAR_MAXCR
 #define VISUAL_SONAR_MAXCR 125
 #endif
+#include <stdint.h>
 
-extern void visual_sonar_init();
+
+extern void visual_sonar_init(void);
 // extern void visual_sonar_periodic();
+
+
+extern uint8_t color_lum_min;
+extern uint8_t color_lum_max;
+
+extern uint8_t color_cb_min;
+extern uint8_t color_cb_max;
+
+extern uint8_t color_cr_min;
+extern uint8_t color_cr_max;
+
+extern struct video_listener *listener;
 
 #endif
 
