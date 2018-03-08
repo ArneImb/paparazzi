@@ -68,4 +68,3 @@ int opencv_YCbCr_filter(char *img, int width, int height)
 	return 0;
 }
 
-<opencv2/core/core.hpp>
