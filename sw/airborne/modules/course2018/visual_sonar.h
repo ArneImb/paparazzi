@@ -49,8 +49,20 @@
 #ifndef VISUAL_SONAR_MAXCR
 #define VISUAL_SONAR_MAXCR 125
 #endif
-#include <stdint.h>
 
+#ifndef VISUAL_SONAR_SQUARE_HEIGHT
+#define VISUAL_SONAR_SQUARE_HEIGHT 50
+#endif
+
+#ifndef VISUAL_SONAR_SQUARE_WIDTH
+#define VISUAL_SONAR_SQUARE_WIDTH 20
+#endif
+
+#ifndef VISUAL_SONAR_TH
+#define VISUAL_SONAR_TH 0.99
+#endif
+
+#include <stdint.h>
 
 extern void visual_sonar_init(void);
 // extern void visual_sonar_periodic();
@@ -64,6 +76,12 @@ extern uint8_t color_cb_max;
 
 extern uint8_t color_cr_min;
 extern uint8_t color_cr_max;
+
+extern uint16_t pix_to_go;
+
+extern uint8_t squareheight;
+extern uint8_t squarewidth;
+extern float square_th;
 
 extern struct video_listener *listener;
 

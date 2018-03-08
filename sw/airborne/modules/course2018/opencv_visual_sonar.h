@@ -28,6 +28,10 @@
 #ifndef OPENCV_VISUAL_SONAR_H
 #define OPENCV_VISUAL_SONAR_H
 
+#include <stdint.h>
+
+extern float square_th;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

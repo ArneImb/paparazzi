@@ -26,6 +26,14 @@
 #include "modules/course2018/visual_sonar.h"
 #include "modules/computer_vision/cv.h"
 #include "modules/course2018/opencv_visual_sonar.h"
+#include "firmwares/rotorcraft/navigation.h"
+#include "generated/flight_plan.h"
+#include "generated/airframe.h"
+#include "state.h"
+#include <time.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifndef VISUAL_SONAR_FPS
 #define VISUAL_SONAR_FPS 0      ///< Default FPS (zero means run at camera fps)
@@ -42,6 +50,14 @@ uint8_t color_cb_max  = VISUAL_SONAR_MAXCB;
 uint8_t color_cr_min  = VISUAL_SONAR_MINCR;
 uint8_t color_cr_max  = VISUAL_SONAR_MAXCR;
 
+//Initialize other settings
+uint8_t squareheight = VISUAL_SONAR_SQUARE_HEIGHT;
+uint8_t squarewidth = VISUAL_SONAR_SQUARE_WIDTH;
+float square_th = VISUAL_SONAR_TH;
+
+// Create number of pixels to travel variable
+uint16_t pix_to_go;
+
 // Function
 struct image_t *opencv_func(struct image_t *img);
 struct image_t *opencv_func(struct image_t *img)
@@ -53,9 +69,12 @@ struct image_t *opencv_func(struct image_t *img)
   return NULL;
 }
 
+
+// define all navigation functions below
 void visual_sonar_init()
 {
 	listener = cv_add_to_device(&VISUAL_SONAR_CAMERA, opencv_func, VISUAL_SONAR_FPS); //Define camera in module xml
+	srand(time(NULL));
 }
 
 // void visual_sonar_periodic() {}
