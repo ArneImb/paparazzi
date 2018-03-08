@@ -3,14 +3,70 @@
 <module name="visual_sonar" dir="course2018">
   <doc>
     <description>Obstacle avoid and detect module using a single camera. The module uses opencv functions.</description>
+    
+    <define name="VISUAL_SONAR_CAMERA" value="front_camera|bottom_camera" description="Video device to use"/>
+  	<define name="OPENCV_SONAR_FPS" value="0" description="The (maximum) frequency to run the calculations at. If zero, it will max out at the camera frame rate"/><define name="OPENCVDEMO_FPS" value="0" description="The (maximum) frequency to run the calculations at. If zero, it will max out at the camera frame rate"/>
+  	<define name="VISUAL_SONAR_MINY" value="0-255" description="Minimum Luminance To select pixel as object"/>
+    <define name="VISUAL_SONAR_MAXY" value="0-255" description="Maximum Luminance To select pixel as object"/>
+    <define name="VISUAL_SONAR_MINCR" value="0-255" description="Minimum CR To select pixel as object"/>
+    <define name="VISUAL_SONAR_MAXCR" value="0-255" description="Maximum CR To select pixel as object"/>
+    <define name="VISUAL_SONAR_MINCB" value="0-255" description="Minimum CB To select pixel as object"/>
+    <define name="VISUAL_SONAR_MAXCB" value="0-255" description="Maximum CB To select pixel as object"/>
   </doc>
+  
+  <settings>
+    <dl_settings>
+      <dl_settings NAME="VisualSonar">
+         <dl_setting var="listener->active" min="0" step="1" max="1" shortname="active" />
+         <dl_setting var="color_lum_min" min="0" step="1" max="255" shortname="y_min" />
+         <dl_setting var="color_lum_max" min="0" step="1" max="255" shortname="y_max" />
+         <dl_setting var="color_cb_min"  min="0" step="1" max="255" shortname="u_min" />
+         <dl_setting var="color_cb_max"  min="0" step="1" max="255" shortname="u_max" />
+         <dl_setting var="color_cr_min"  min="0" step="1" max="255" shortname="v_min" />
+         <dl_setting var="color_cr_max"  min="0" step="1" max="255" shortname="v_max" />
+      </dl_settings>
+    </dl_settings>
+  </settings>
+
+  <depends>video_thread</depends>
+  
   <header>
     <file name="visual_sonar.h"/>
   </header>
   <init fun="visual_sonar_init()"/>
-  <periodic fun="visual_sonar_periodic()" freq="4"/>
-  <makefile>
+  <makefile target="ap">
     <file name="visual_sonar.c"/>
+    <file name="opencv_visual_sonar.cpp"/>
+    <file name="opencv_image_functions.cpp" dir="modules/computer_vision"/>
+    <flag name="CXXFLAGS" value="I$(PAPARAZZI_SRC)/sw/ext/opencv_bebop/install/include"/>
+    
+    <flag name="LDFLAGS" value="L$(PAPARAZZI_HOME)/sw/ext/opencv_bebop/install/lib" />
+	<flag name="LDFLAGS" value="lopencv_imgcodecs" />
+	<flag name="LDFLAGS" value="lopencv_video" />
+	<flag name="LDFLAGS" value="lopencv_imgproc" />
+	<flag name="LDFLAGS" value="lopencv_core" />
+	<flag name="LDFLAGS" value="lopencv_world" />
+	<flag name="LDFLAGS" value="L$(PAPARAZZI_HOME)/sw/ext/opencv_bebop/install/share/OpenCV/3rdparty/lib" />
+	<flag name="LDFLAGS" value="lzlib" />
+	<flag name="LDFLAGS" value="llibpng" />
+	<flag name="LDFLAGS" value="lstdc++" />
+	<flag name="LDFLAGS" value="ldl" />
+	<flag name="LDFLAGS" value="lm" />
+	<flag name="LDFLAGS" value="lpthread" />
+	<flag name="LDFLAGS" value="lrt" />
+	<flag name="LDFLAGS" value="ltegra_hal" />
+	<flag name="LDFLAGS" value="llibjpeg" />
+	<flag name="LDFLAGS" value="llibtiff" />
+	<flag name="LDFLAGS" value="lstdc++" />
   </makefile>
+  <makefile target="nps">
+  	<file name="visual_sonar.c"/>
+    <file name="opencv_visual_sonar.cpp"/>
+    <file name="opencv_image_functions.cpp" dir="modules/computer_vision"/>
+    <raw>
+      nps.CXXFLAGS += $(shell pkg-config opencv --cflags)
+      nps.LDFLAGS  += -lopencv_imgproc -lopencv_highgui -lopencv_core
+    </raw>
+ </makefile>
 </module>
 

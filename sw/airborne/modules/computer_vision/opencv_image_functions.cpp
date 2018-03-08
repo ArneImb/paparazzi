@@ -40,7 +40,7 @@ void coloryuv_opencv_to_yuv422(Mat image, char *img, int width, int height)
   CV_Assert(image.channels() == 3);
 
   int nRows = image.rows;
-  int nCols = image.cols;
+  int nCols = image.cols*3;
 
   // If the image is one block in memory we can iterate over it all at once!
   if (image.isContinuous()) {
@@ -55,7 +55,7 @@ void coloryuv_opencv_to_yuv422(Mat image, char *img, int width, int height)
   int index_img = 0;
   for (i = 0; i < nRows; ++i) {
     p = image.ptr<uchar>(i);
-    for (j = 0; j < nCols; j += 6) {
+    for (j = 0; j < nCols; j+=6) {
       img[index_img++] = p[j + 1]; //U
       img[index_img++] = p[j];//Y
       img[index_img++] = p[j + 2]; //V

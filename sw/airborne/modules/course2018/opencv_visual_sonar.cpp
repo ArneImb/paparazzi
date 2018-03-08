@@ -24,25 +24,48 @@
  */
 
 #include "opencv_visual_sonar.h"
-#include "modules/course2018/visual_sonar.h"
+#include "visual_sonar.h"
 
 using namespace std;
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 using namespace cv;
-#include "opencv_image_functions.h"
+#include "modules/computer_vision/opencv_image_functions.h"
 
 int opencv_YCbCr_filter(char *img, int width, int height)
 {
 	// Create a new image, using the original bebop image.
-	//Mat M(height, width, CV_8UC1, img);
-	Mat mask;
+	Mat M(height, width, CV_8UC2, img); //YCrCb
+	Mat M_RGB;
+	Mat masked_RGB;
 
-	inRange(img,
-			Scalar(VISUAL_SONAR_MINY, VISUAL_SONAR_MINCB, VISUAL_SONAR_MINCR),
-			Scalar(VISUAL_SONAR_MAXY, VISUAL_SONAR_MAXCB, VISUAL_SONAR_MAXCR),
+	//Convert UYUV in paparazzi to YUV opencv
+	cvtColor(M, M_RGB, CV_YUV2RGB_Y422);
+	cvtColor(M_RGB, M, CV_RGB2YUV);
+
+	Mat mask(M.size(), CV_8UC1, Scalar(0));
+
+	//line(M, Point(0,width/2), Point(height,width/2),Scalar(255,255,255), 20);
+	//circle(M,Point(height/2,width/2), 50, Scalar(255,255,255), 10);
+	// Filter YCrCb values
+	inRange(M,
+			Scalar(color_lum_min, color_cb_min, color_cr_min),
+			Scalar(color_lum_max, color_cb_max, color_cr_max),
 			mask);
 
+	//cvtColor(mask, mask, CV_GRAY2RGB);
+	//cvtColor(M, M, CV_YUV2RGB);
+	//cvtColor(M, M, CV_RGB2GRAY);
+
+	//mask.copyTo(M);
+	bitwise_and(M_RGB,M_RGB,masked_RGB,mask); //in, in, out (cooy to inimg frame)
+
+	cvtColor(masked_RGB, M, CV_RGB2YUV);
+	//Convert back and save in original image position
+	coloryuv_opencv_to_yuv422(M, img, width, height);
+	//coloryuv_opencv_to_yuv422(mask, img, width, height);
+
+	return 0;
 }
 
 <opencv2/core/core.hpp>
