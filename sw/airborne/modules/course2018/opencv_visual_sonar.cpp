@@ -68,6 +68,11 @@ uint16_t pixels_to_go(Mat mask, uint8_t square_width = squarewidth, uint8_t squa
 	if(left_pos==0) return 0; else return left_pos - square_width;
 }
 
+float pix_to_m(uint16_t pixels)
+{
+	return m_to_go;
+}
+
 int opencv_YCbCr_filter(char *img, int width, int height)
 {
 	// Create a new image, using the original bebop image.

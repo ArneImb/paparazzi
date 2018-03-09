@@ -62,9 +62,14 @@
 #define VISUAL_SONAR_TH 0.9
 #endif
 
-#include <stdint.h>
+#include <inttypes.h>
+#include "math/pprz_geodetic_int.h"
 
 extern void visual_sonar_init(void);
+extern uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters);
+extern uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
+extern uint8_t increase_nav_heading(int32_t *heading, float incrementDegrees);
+extern uint8_t chooseRandomIncrementAvoidance(void);
 // extern void visual_sonar_periodic();
 
 
@@ -82,6 +87,7 @@ extern uint16_t pix_to_go;
 extern uint8_t squareheight;
 extern uint8_t squarewidth;
 extern float square_th;
+extern float m_to_go;
 
 extern struct video_listener *listener;
 
