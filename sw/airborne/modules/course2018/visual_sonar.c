@@ -40,6 +40,15 @@
 #endif
 PRINT_CONFIG_VAR(OPENCVDEMO_FPS)
 
+#define VISUAL_SONAR_VERBOSE TRUE
+
+#define PRINT(string,...) fprintf(stderr, "[visual_sonar->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
+#if VISUAL_SONAR_VERBOSE
+#define VERBOSE_PRINT PRINT
+#else
+#define VERBOSE_PRINT(...)
+#endif
+
 struct video_listener *listener = NULL;
 
 // Filter Settings
@@ -65,6 +74,7 @@ struct image_t *opencv_func(struct image_t *img)
   if (img->type == IMAGE_YUV422) {
     // Call OpenCV (C++ from paparazzi C function)
 	  opencv_YCbCr_filter((char *) img->buf, img->w, img->h);
+	  VERBOSE_PRINT("pixels to go = %d \n", pix_to_go);
   }
   return NULL;
 }

@@ -55,11 +55,11 @@
 #endif
 
 #ifndef VISUAL_SONAR_SQUARE_WIDTH
-#define VISUAL_SONAR_SQUARE_WIDTH 20
+#define VISUAL_SONAR_SQUARE_WIDTH 5
 #endif
 
 #ifndef VISUAL_SONAR_TH
-#define VISUAL_SONAR_TH 0.99
+#define VISUAL_SONAR_TH 0.9
 #endif
 
 #include <stdint.h>

@@ -30,8 +30,6 @@
 
 #include <stdint.h>
 
-extern float square_th;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

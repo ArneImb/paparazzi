@@ -50,7 +50,7 @@ uint16_t pixels_to_go(Mat mask, uint8_t square_width = squarewidth, uint8_t squa
 	uint16_t square_area = square_width*square_height;
 	Mat bin_mask;
 	Mat integral_mask;
-	cv::threshold(mask, bin_mask, 127, 255, THRESH_BINARY);
+	cv::threshold(mask, bin_mask, 127, 1, THRESH_BINARY);
 	integral(bin_mask,integral_mask);
 
 	uint16_t top_pos = (h-square_height)/2;
