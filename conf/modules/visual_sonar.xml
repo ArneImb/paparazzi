@@ -24,6 +24,7 @@
          <dl_setting var="color_cb_max"  min="0" step="1" max="255" shortname="u_max" />
          <dl_setting var="color_cr_min"  min="0" step="1" max="255" shortname="v_min" />
          <dl_setting var="color_cr_max"  min="0" step="1" max="255" shortname="v_max" />
+         <dl_setting var="square_th" min="0." step="0.01" max="1." shortname="th" />
       </dl_settings>
     </dl_settings>
   </settings>
@@ -39,25 +40,20 @@
     <file name="opencv_visual_sonar.cpp"/>
     <file name="opencv_image_functions.cpp" dir="modules/computer_vision"/>
     <flag name="CXXFLAGS" value="I$(PAPARAZZI_SRC)/sw/ext/opencv_bebop/install/include"/>
-    
-    <flag name="LDFLAGS" value="L$(PAPARAZZI_HOME)/sw/ext/opencv_bebop/install/lib" />
-	<flag name="LDFLAGS" value="lopencv_imgcodecs" />
-	<flag name="LDFLAGS" value="lopencv_video" />
-	<flag name="LDFLAGS" value="lopencv_imgproc" />
-	<flag name="LDFLAGS" value="lopencv_core" />
+
+	<flag name="LDFLAGS" value="L$(PAPARAZZI_HOME)/sw/ext/opencv_bebop/install/lib" />
 	<flag name="LDFLAGS" value="lopencv_world" />
 	<flag name="LDFLAGS" value="L$(PAPARAZZI_HOME)/sw/ext/opencv_bebop/install/share/OpenCV/3rdparty/lib" />
+	<flag name="LDFLAGS" value="ltegra_hal" />
 	<flag name="LDFLAGS" value="lzlib" />
+	<flag name="LDFLAGS" value="llibjpeg" />
 	<flag name="LDFLAGS" value="llibpng" />
+	<flag name="LDFLAGS" value="llibtiff" />
 	<flag name="LDFLAGS" value="lstdc++" />
 	<flag name="LDFLAGS" value="ldl" />
 	<flag name="LDFLAGS" value="lm" />
 	<flag name="LDFLAGS" value="lpthread" />
 	<flag name="LDFLAGS" value="lrt" />
-	<flag name="LDFLAGS" value="ltegra_hal" />
-	<flag name="LDFLAGS" value="llibjpeg" />
-	<flag name="LDFLAGS" value="llibtiff" />
-	<flag name="LDFLAGS" value="lstdc++" />
   </makefile>
   <makefile target="nps">
   	<file name="visual_sonar.c"/>

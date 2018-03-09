@@ -24,6 +24,7 @@
  */
 
 #include "opencv_visual_sonar.h"
+#include "opencv_visual_sonar.hpp"
 #include "visual_sonar.h"
 
 using namespace std;
@@ -31,6 +32,46 @@ using namespace std;
 #include <opencv2/imgproc/imgproc.hpp>
 using namespace cv;
 #include "modules/computer_vision/opencv_image_functions.h"
+
+uint16_t number_positives_square(Mat integral_img, uint16_t left, uint16_t right, uint16_t top, uint16_t bottom)
+{
+	uint16_t n_positives;
+	n_positives = (integral_img.at<uint32_t>(top,left)+integral_img.at<uint32_t>(bottom,right)) -
+				  (integral_img.at<uint32_t>(top,right)+integral_img.at<uint32_t>(bottom,left));   //(y,x)
+
+	return n_positives;
+}
+
+uint16_t pixels_to_go(Mat mask, uint8_t square_width = squarewidth, uint8_t square_height = squareheight, float threshold = square_th)
+{
+	int w = mask.size().width;
+	int h = mask.size().height;
+	uint16_t left_pos;
+	uint16_t square_area = square_width*square_height;
+	Mat bin_mask;
+	Mat integral_mask;
+	cv::threshold(mask, bin_mask, 127, 1, THRESH_BINARY);
+	integral(bin_mask,integral_mask);
+
+	uint16_t top_pos = (h-square_height)/2;
+	uint16_t bottom_pos = (h+square_height)/2;
+	uint16_t min_area = threshold*square_area;
+	for(left_pos = 0; left_pos<=w+square_width; left_pos += square_width)
+	{
+		uint16_t right_pos = left_pos + square_width;
+		uint16_t n_postives = number_positives_square(integral_mask, left_pos, right_pos, top_pos, bottom_pos);
+		if(n_postives < min_area)
+		{
+			break;
+		}
+	}
+	if(left_pos==0) return 0; else return left_pos - square_width;
+}
+
+float pix_to_m(uint16_t pixels)
+{
+	return m_to_go;
+}
 
 int opencv_YCbCr_filter(char *img, int width, int height)
 {
@@ -53,12 +94,16 @@ int opencv_YCbCr_filter(char *img, int width, int height)
 			Scalar(color_lum_max, color_cb_max, color_cr_max),
 			mask);
 
+	pix_to_go = pixels_to_go(mask);
+
 	//cvtColor(mask, mask, CV_GRAY2RGB);
 	//cvtColor(M, M, CV_YUV2RGB);
 	//cvtColor(M, M, CV_RGB2GRAY);
 
 	//mask.copyTo(M);
 	bitwise_and(M_RGB,M_RGB,masked_RGB,mask); //in, in, out (cooy to inimg frame)
+
+	rectangle(masked_RGB, Point(0,(height+squareheight)/2), Point(pix_to_go,(height-squareheight)/2), Scalar(255,0,0),2);
 
 	cvtColor(masked_RGB, M, CV_RGB2YUV);
 	//Convert back and save in original image position

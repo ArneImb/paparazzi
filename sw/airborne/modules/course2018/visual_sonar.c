@@ -26,11 +26,28 @@
 #include "modules/course2018/visual_sonar.h"
 #include "modules/computer_vision/cv.h"
 #include "modules/course2018/opencv_visual_sonar.h"
+#include "firmwares/rotorcraft/navigation.h"
+#include "generated/flight_plan.h"
+#include "generated/airframe.h"
+#include "state.h"
+#include <time.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifndef VISUAL_SONAR_FPS
 #define VISUAL_SONAR_FPS 0      ///< Default FPS (zero means run at camera fps)
 #endif
 PRINT_CONFIG_VAR(OPENCVDEMO_FPS)
+
+#define VISUAL_SONAR_VERBOSE TRUE
+
+#define PRINT(string,...) fprintf(stderr, "[visual_sonar->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
+#if VISUAL_SONAR_VERBOSE
+#define VERBOSE_PRINT PRINT
+#else
+#define VERBOSE_PRINT(...)
+#endif
 
 struct video_listener *listener = NULL;
 
@@ -42,6 +59,18 @@ uint8_t color_cb_max  = VISUAL_SONAR_MAXCB;
 uint8_t color_cr_min  = VISUAL_SONAR_MINCR;
 uint8_t color_cr_max  = VISUAL_SONAR_MAXCR;
 
+//Initialize other settings
+uint8_t squareheight = VISUAL_SONAR_SQUARE_HEIGHT;
+uint8_t squarewidth = VISUAL_SONAR_SQUARE_WIDTH;
+float square_th = VISUAL_SONAR_TH;
+
+// Create number of pixels to travel variable
+uint16_t pix_to_go;
+float m_to_go;
+
+// navigation settings
+float incrementForAvoidance;
+
 // Function
 struct image_t *opencv_func(struct image_t *img);
 struct image_t *opencv_func(struct image_t *img)
@@ -49,15 +78,90 @@ struct image_t *opencv_func(struct image_t *img)
   if (img->type == IMAGE_YUV422) {
     // Call OpenCV (C++ from paparazzi C function)
 	  opencv_YCbCr_filter((char *) img->buf, img->w, img->h);
+	  VERBOSE_PRINT("pixels to go = %d \n", pix_to_go);
   }
   return NULL;
 }
 
+
+// define all navigation functions below
 void visual_sonar_init()
 {
 	listener = cv_add_to_device(&VISUAL_SONAR_CAMERA, opencv_func, VISUAL_SONAR_FPS); //Define camera in module xml
+	srand(time(NULL));
 }
 
-// void visual_sonar_periodic() {}
+//Strategic navigation functions called in flightplan
+
+
+/*
+ * Increases the NAV heading. Assumes heading is an INT32_ANGLE. It is bound in this function.
+ */
+uint8_t increase_nav_heading(int32_t *heading, float incrementDegrees)
+{
+  struct Int32Eulers *eulerAngles   = stateGetNedToBodyEulers_i();
+  int32_t newHeading = eulerAngles->psi + ANGLE_BFP_OF_REAL(RadOfDeg(incrementDegrees));
+  // Check if your turn made it go out of bounds...
+  INT32_ANGLE_NORMALIZE(newHeading); // HEADING HAS INT32_ANGLE_FRAC....
+  *heading = newHeading;
+  VERBOSE_PRINT("Increasing heading to %f\n", DegOfRad(ANGLE_FLOAT_OF_BFP(*heading)));
+  return false;
+}
+
+/*
+ * Calculates coordinates of a distance of 'distanceMeters' forward w.r.t. current position and heading
+ */
+static uint8_t calculateForwards(struct EnuCoor_i *new_coor, float distanceMeters)
+{
+  struct EnuCoor_i *pos             = stateGetPositionEnu_i(); // Get your current position
+  struct Int32Eulers *eulerAngles   = stateGetNedToBodyEulers_i();
+  // Calculate the sine and cosine of the heading the drone is keeping
+  float sin_heading                 = sinf(ANGLE_FLOAT_OF_BFP(eulerAngles->psi));
+  float cos_heading                 = cosf(ANGLE_FLOAT_OF_BFP(eulerAngles->psi));
+  // Now determine where to place the waypoint you want to go to
+  new_coor->x                       = pos->x + POS_BFP_OF_REAL(sin_heading * (distanceMeters));
+  new_coor->y                       = pos->y + POS_BFP_OF_REAL(cos_heading * (distanceMeters));
+  VERBOSE_PRINT("Calculated %f m forward position. x: %f  y: %f based on pos(%f, %f) and heading(%f)\n", distanceMeters,
+                POS_FLOAT_OF_BFP(new_coor->x), POS_FLOAT_OF_BFP(new_coor->y), POS_FLOAT_OF_BFP(pos->x), POS_FLOAT_OF_BFP(pos->y),
+                DegOfRad(ANGLE_FLOAT_OF_BFP(eulerAngles->psi)) );
+  return false;
+}
+
+/*
+ * Sets waypoint 'waypoint' to the coordinates of 'new_coor'
+ */
+uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor)
+{
+  VERBOSE_PRINT("Moving waypoint %d to x:%f y:%f\n", waypoint, POS_FLOAT_OF_BFP(new_coor->x),
+                POS_FLOAT_OF_BFP(new_coor->y));
+  waypoint_set_xy_i(waypoint, new_coor->x, new_coor->y);
+  return false;
+}
+
+/*
+ * Calculates coordinates of distance forward and sets waypoint 'waypoint' to those coordinates
+ */
+uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters)
+{
+  struct EnuCoor_i new_coor;
+  calculateForwards(&new_coor, distanceMeters);
+  moveWaypoint(waypoint, &new_coor);
+  return false;
+}
+
+
+uint8_t chooseRandomIncrementAvoidance()
+{
+  // Randomly choose CW or CCW avoiding direction
+  int r = rand() % 2;
+  if (r == 0) {
+    incrementForAvoidance = 10.0;
+    //VERBOSE_PRINT("Set avoidance increment to: %f\n", incrementForAvoidance);
+  } else {
+    incrementForAvoidance = -10.0;
+    //VERBOSE_PRINT("Set avoidance increment to: %f\n", incrementForAvoidance);
+  }
+  return false;
+}
 
 
