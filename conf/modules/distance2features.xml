@@ -1,0 +1,16 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="distance2features">
+  <doc>
+    <description>This module implements the algorithm in the paper &quot;Obstacle detection using optical flow&quot; to get the distance to interesting features.             </description>
+  </doc>
+  <header>
+    <file name="distance2features.h"/>
+  </header>
+  <init fun="start_distance2features"/>
+  <periodic fun="periodic_distance2features" freq="10" start="start_distance2features"/>
+  <makefile>
+    <file name="distance2features.c"/>
+  </makefile>
+</module>
+
