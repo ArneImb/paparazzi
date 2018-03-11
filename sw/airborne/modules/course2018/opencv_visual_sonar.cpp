@@ -70,6 +70,7 @@ uint16_t pixels_to_go(Mat mask, uint8_t square_width = squarewidth, uint8_t squa
 
 float pix_to_m(uint16_t pixels)
 {
+	float m_to_go = 0.03328*pixels+2.12956;
 	return m_to_go;
 }
 
