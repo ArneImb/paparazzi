@@ -33,29 +33,34 @@ using namespace std;
 using namespace cv;
 #include "modules/computer_vision/opencv_image_functions.h"
 
+// Calculates the number of accessible pixels in a square using the integral image of a masked image
 uint16_t number_positives_square(Mat integral_img, uint16_t left, uint16_t right, uint16_t top, uint16_t bottom)
 {
-	uint16_t n_positives;
+	uint16_t n_positives; 									//number of positive pixels in a square block
 	n_positives = (integral_img.at<uint32_t>(top,left)+integral_img.at<uint32_t>(bottom,right)) -
 				  (integral_img.at<uint32_t>(top,right)+integral_img.at<uint32_t>(bottom,left));   //(y,x)
 
 	return n_positives;
 }
 
+//Calculates the number of pixels up to an obstacle by stepping forward in a masked image with pixel blocks
 uint16_t pixels_to_go(Mat mask, uint8_t square_width = squarewidth, uint8_t square_height = squareheight, float threshold = square_th)
 {
-	int w = mask.size().width;
-	int h = mask.size().height;
-	uint16_t left_pos;
-	uint16_t square_area = square_width*square_height;
-	Mat bin_mask;
-	Mat integral_mask;
-	cv::threshold(mask, bin_mask, 127, 1, THRESH_BINARY);
-	integral(bin_mask,integral_mask);
+	//Define pixel block properties and masked image properties
+	int w = mask.size().width; 								//Width of mask in pixels
+	int h = mask.size().height; 							//Height of mask in pixels
+	uint16_t left_pos; 										//Left position of pixel block
+	uint16_t square_area = square_width*square_height; 		//Area of pixel block
+	Mat bin_mask;											//Define binary mask
+	Mat integral_mask; 										//Define integral image of mask
+	cv::threshold(mask, bin_mask, 127, 1, THRESH_BINARY); 	//Set threshold of mask
+	integral(bin_mask,integral_mask); 						//Define integral image of mask
 
-	uint16_t top_pos = (h-square_height)/2;
-	uint16_t bottom_pos = (h+square_height)/2;
-	uint16_t min_area = threshold*square_area;
+	uint16_t top_pos = (h-square_height)/2;					//Top position of pixel block
+	uint16_t bottom_pos = (h+square_height)/2;				//Bottom position of pixel block
+	uint16_t min_area = threshold*square_area;				//Minimal area of pixel block
+
+	//Step forward and check if the number of accessible pixels stays above a certain threshold
 	for(left_pos = 0; left_pos<=w+square_width; left_pos += square_width)
 	{
 		uint16_t right_pos = left_pos + square_width;
@@ -68,12 +73,20 @@ uint16_t pixels_to_go(Mat mask, uint8_t square_width = squarewidth, uint8_t squa
 	if(left_pos==0) return 0; else return left_pos - square_width;
 }
 
+//Converts accessible pixels to accessible distance
 float pix_to_m(uint16_t pixels)
 {
-	float meters = 0.03328*pixels+2.12956;
+	uint16_t focal = 250; 									//focal distance camera in pixels
+	uint16_t scrheight = 245; 								//camera screen height in pixels
+	float theta = 0.; 										//pitch angle in radians (SHOULD BE CHANGED TO ACTUAL REAL-TIME PITCH ANGLE)
+
+	//float meters = 0.03328*pixels+2.12956; 				//linear fit of test data
+	//float meters = focal/(scrheight/2-pixels); 			//analytical without pitch angle theta
+	float meters = (focal+(scrheight/2-pixels)*theta)/(scrheight/2-pixels-focal*theta); //analytical with pitch angle theta
 	return meters;
 }
 
+//Generates YUV image from original bebop image
 int opencv_YCbCr_filter(char *img, int width, int height)
 {
 	// Create a new image, using the original bebop image.
