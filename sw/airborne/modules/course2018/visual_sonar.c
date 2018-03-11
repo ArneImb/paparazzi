@@ -79,6 +79,7 @@ struct image_t *opencv_func(struct image_t *img)
     // Call OpenCV (C++ from paparazzi C function)
 	  opencv_YCbCr_filter((char *) img->buf, img->w, img->h);
 	  VERBOSE_PRINT("pixels to go = %d \n", pix_to_go);
+	  VERBOSE_PRINT("meters to go = %f \n", m_to_go);
   }
   return NULL;
 }
