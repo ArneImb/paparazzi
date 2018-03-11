@@ -70,6 +70,8 @@ float m_to_go;
 
 // navigation settings
 float incrementForAvoidance;
+uint8_t safeToGoForwards = false;
+uint8_t at_goal = 0;
 
 // Function
 struct image_t *opencv_func(struct image_t *img);
@@ -89,8 +91,38 @@ struct image_t *opencv_func(struct image_t *img)
 void visual_sonar_init()
 {
 	listener = cv_add_to_device(&VISUAL_SONAR_CAMERA, opencv_func, VISUAL_SONAR_FPS); //Define camera in module xml
+	chooseRandomIncrementAvoidance();
 	srand(time(NULL));
 }
+
+void visual_sonar_periodic()
+{
+	// Check the amount of orange. If this is above a threshold
+	// you want to turn a certain amount of degrees
+	safeToGoForwards = pix_to_go > 40;
+	//VERBOSE_PRINT("Pixel count threshold: %d safe: %d \n", color_count, tresholdColorCount, safeToGoForwards);
+	if(at_goal==1)
+	{
+		if(safeToGoForwards)
+		{
+			float moveDistance = m_to_go;
+			moveWaypointForward(WP_GOAL, moveDistance);
+			nav_set_heading_towards_waypoint(WP_GOAL);
+			chooseRandomIncrementAvoidance();
+			at_goal = 0;
+		}
+		else
+		{
+			increase_nav_heading(&nav_heading, incrementForAvoidance);
+		}
+	}
+	return;
+}
+
+uint8_t get_at_goal(){
+	return at_goal;
+}
+
 
 //Strategic navigation functions called in flightplan
 

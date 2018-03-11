@@ -70,8 +70,8 @@ uint16_t pixels_to_go(Mat mask, uint8_t square_width = squarewidth, uint8_t squa
 
 float pix_to_m(uint16_t pixels)
 {
-	float m_to_go = 0.03328*pixels+2.12956;
-	return m_to_go;
+	float meters = 0.03328*pixels+2.12956;
+	return meters;
 }
 
 int opencv_YCbCr_filter(char *img, int width, int height)
@@ -96,6 +96,7 @@ int opencv_YCbCr_filter(char *img, int width, int height)
 			mask);
 
 	pix_to_go = pixels_to_go(mask);
+	m_to_go = pix_to_m(pix_to_go);
 
 	//cvtColor(mask, mask, CV_GRAY2RGB);
 	//cvtColor(M, M, CV_YUV2RGB);

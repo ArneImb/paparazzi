@@ -27,27 +27,27 @@
 #define VISUAL_SONAR_H
 
 #ifndef VISUAL_SONAR_MINY
-#define VISUAL_SONAR_MINY 73
+#define VISUAL_SONAR_MINY 70
 #endif
 
 #ifndef VISUAL_SONAR_MAXY
-#define VISUAL_SONAR_MAXY 110
+#define VISUAL_SONAR_MAXY 117
 #endif
 
 #ifndef VISUAL_SONAR_MINCB
-#define VISUAL_SONAR_MINCB 80
+#define VISUAL_SONAR_MINCB 111
 #endif
 
 #ifndef VISUAL_SONAR_MAXCB
-#define VISUAL_SONAR_MAXCB 92
+#define VISUAL_SONAR_MAXCB 132
 #endif
 
 #ifndef VISUAL_SONAR_MINCR
-#define VISUAL_SONAR_MINCR 117
+#define VISUAL_SONAR_MINCR 124
 #endif
 
 #ifndef VISUAL_SONAR_MAXCR
-#define VISUAL_SONAR_MAXCR 125
+#define VISUAL_SONAR_MAXCR 138
 #endif
 
 #ifndef VISUAL_SONAR_SQUARE_HEIGHT
@@ -66,6 +66,8 @@
 #include "math/pprz_geodetic_int.h"
 
 extern void visual_sonar_init(void);
+extern void visual_sonar_periodic(void);
+extern uint8_t get_at_goal(void);
 extern uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters);
 extern uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
 extern uint8_t increase_nav_heading(int32_t *heading, float incrementDegrees);
@@ -88,6 +90,7 @@ extern uint8_t squareheight;
 extern uint8_t squarewidth;
 extern float square_th;
 extern float m_to_go;
+extern uint8_t at_goal;
 
 extern struct video_listener *listener;
 

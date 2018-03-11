@@ -15,7 +15,8 @@
     <waypoint name="STDBY" x="1.9" y="1.0"/>
     <waypoint name="TD" x="0.8" y="-1.7"/>
     <waypoint name="GOAL" x="1.9" y="1.0"/>
-    <waypoint name="TRAJECTORY" x="1.9" y="1.0"/>
+    <waypoint name="ATGOAL" x="1.9" y="1.0"/>
+    <!--<waypoint name="TRAJECTORY" x="1.9" y="1.0"/>-->
     <waypoint lat="51.9905836" lon="4.3767729" name="_CZ1"/>
     <waypoint lat="51.9906365" lon="4.3767138" name="_CZ2"/>
     <waypoint lat="51.990680" lon="4.376805" name="_CZ3"/>
@@ -106,12 +107,20 @@
       <call_once fun="NavSetWaypointHere(WP_GOAL)"/>
       <!-- <set var="trajectoryConfidence" value="1"/> -->
     </block>
-    <block name="StayGoal">
-      <stay wp="GOAL"/>
-      <!--  <exception cond="!InsideObstacleZone(WaypointX(WP_TRAJECTORY),WaypointY(WP_TRAJECTORY))" deroute="PrepareObstacleRun"/> -->
+    <block name="GoGoal">
+      <go wp="GOAL"/>
+      <set var="at_goal" value="1"/>
+      <call_once fun="NavSetWaypointHere(WP_ATGOAL)"/>
+      <!--  <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="PrepareObstacleRun"/> -->
     </block>
-    <!-- <block name="PrepareObstacleRun">
-      <while cond="!InsideObstacleZone(WaypointX(WP_TRAJECTORY),WaypointY(WP_TRAJECTORY))">
+    <block name="AtGoal">
+      <while cond="get_at_goal()==1">
+      	<go wp="ATGOAL"/>
+      </while>
+      <deroute block="GoGoal"/>
+    </block>
+    <block name="PrepareObstacleRun">
+      <while cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))">
         <call_once fun="increase_nav_heading(&nav_heading, 5)"/>
       </while>
     </block>
@@ -121,7 +130,7 @@
         <go wp="GOAL"/>
       </while>
       <deroute block="START"/>
-    </block> -->
+    </block>
     <block key="l" name="Land here" strip_button="Land Here" strip_icon="land-right.png">
       <call_once fun="NavSetWaypointHere(WP_TD)"/>
       <go wp="TD"/>
