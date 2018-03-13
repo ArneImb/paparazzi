@@ -1,0 +1,14 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="bebop_control_course2018" dir="course2018">
+  <doc>
+    <description>This module will include some navigation functions that come in handy during the project of the MAV course 2018</description>
+  </doc>
+  <header>
+    <file name="bebop_control_course2018.h"/>
+  </header>
+  <makefile>
+    <file name="bebop_control_course2018.c"/>
+  </makefile>
+</module>
+

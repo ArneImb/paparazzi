@@ -42,12 +42,17 @@
     </module-->
 
     <module name="video_thread"/>
+    <module name="video_capture">
+      <define name="VIDEO_CAPTURE_CAMERA" value= "front_camera" />
+      <define name="VIDEO_CAPTURE_PATH" value="/data/video/images"/>
+    </module>
 
     <module name="video_rtp_stream">
-      <define name="VIEWVIDEO_CAMERA" value="bottom_camera"/>
-      <define name="VIEWVIDEO_CAMERA2" value="front_camera"/>
-      <define name="VIEWVIDEO_DOWNSIZE_FACTOR" value="2"/>
-      <define name="VIEWVIDEO_QUALITY_FACTOR" value="40"/>
+      <define name="VIEWVIDEO_CAMERA" value="front_camera"/>
+      <define name="VIEWVIDEO_FPS" value="18"/>
+      <define name="VIEWVIDEO_STREAM_VIDEO" value="TRUE" />
+      <define name="VIEWVIDEO_STREAM_VIDEO" value="1" />
+      <define name="VIEWVIDEO_SHOT_PATH" value="/data/ftpinternal_000" />
     </module>
 
     <module name="bebop_ae_awb"/>
