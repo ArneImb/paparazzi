@@ -76,13 +76,15 @@ uint16_t pixels_to_go(Mat mask, uint8_t square_width = squarewidth, uint8_t squa
 //Converts accessible pixels to accessible distance
 float pix_to_m(uint16_t pixels)
 {
-	uint16_t focal = 250; 									//focal distance camera in pixels
-	uint16_t scrheight = 245; 								//camera screen height in pixels
-	float theta = 0.; 										//pitch angle in radians (SHOULD BE CHANGED TO ACTUAL REAL-TIME PITCH ANGLE)
-
-	//float meters = 0.03328*pixels+2.12956; 				//linear fit of test data
-	//float meters = focal/(scrheight/2-pixels); 			//analytical without pitch angle theta
-	float meters = (focal+(scrheight/2-pixels)*theta)/(scrheight/2-pixels-focal*theta); //analytical with pitch angle theta
+	float meters = 0.; //Initialize distance at zero, since the function is only valid for pixels>0
+	if (pixels>0)
+	{
+		uint16_t focal = 250; 																		//focal distance camera in pixels
+		uint16_t scrheight = 245; 																	//camera screen height in pixels
+		float theta = 0.; 																			//pitch angle in radians (SHOULD BE CHANGED TO ACTUAL REAL-TIME PITCH ANGLE)
+		meters = (focal+(scrheight/2-pixels)*theta)/(scrheight/2-pixels-focal*theta); 				//analytical with pitch angle theta
+		meters -= 1.; 																				//One meter of safety margin
+	}
 	return meters;
 }
 
