@@ -26,6 +26,7 @@
 #include "opencv_visual_sonar.h"
 #include "opencv_visual_sonar.hpp"
 #include "visual_sonar.h"
+#include "state.h"
 
 using namespace std;
 #include <opencv2/core/core.hpp>
@@ -81,7 +82,7 @@ float pix_to_m(uint16_t pixels)
 	{
 		uint16_t focal = 250; 																		//focal distance camera in pixels
 		uint16_t scrheight = 245; 																	//camera screen height in pixels
-		float theta = 0.; 																			//pitch angle in radians (SHOULD BE CHANGED TO ACTUAL REAL-TIME PITCH ANGLE)
+		float theta = stateGetNedToBodyEulers_f()->theta; 																			//pitch angle in radians (SHOULD BE CHANGED TO ACTUAL REAL-TIME PITCH ANGLE)
 		meters = (focal+(scrheight/2-pixels)*theta)/(scrheight/2-pixels-focal*theta); 				//analytical with pitch angle theta
 		meters -= 1.; 																				//One meter of safety margin
 	}
