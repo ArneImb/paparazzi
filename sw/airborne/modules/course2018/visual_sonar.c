@@ -71,7 +71,8 @@ float m_to_go;
 // navigation settings
 float incrementForAvoidance;
 uint8_t safeToGoForwards = false;
-uint8_t at_goal = 0;
+uint8_t at_goal = false;
+float best_distance = 0;
 
 // Function
 struct image_t *opencv_func(struct image_t *img);
@@ -99,18 +100,36 @@ void visual_sonar_periodic()
 {
 	// Check the amount of orange. If this is above a threshold
 	// you want to turn a certain amount of degrees
-	safeToGoForwards = pix_to_go > 40;
+	safeToGoForwards = m_to_go > 0.5;
 	//VERBOSE_PRINT("Pixel count threshold: %d safe: %d \n", color_count, tresholdColorCount, safeToGoForwards);
-	if(at_goal==1)
-	{
+	if(at_goal==false){
+		if(pix_to_go==0){
+			waypoint_set_here_2d(WP_ATGOAL);
+			at_goal = true;
+		}
+	}
+	if(at_goal){
 		if(safeToGoForwards)
 		{
-			float moveDistance = m_to_go;
-			moveWaypointForward(WP_GOAL, moveDistance);
-			nav_set_heading_towards_waypoint(WP_GOAL);
-			chooseRandomIncrementAvoidance();
-			at_goal = 0;
-		}
+			int r = rand()%20;
+			if(r==1){
+				if(m_to_go > best_distance){
+					best_distance = m_to_go;
+					moveWaypointForward(WP_GOAL, best_distance);
+				}
+				increase_nav_heading(&nav_heading, incrementForAvoidance);
+			}
+			else{
+				if(m_to_go > best_distance){
+					best_distance = m_to_go;
+					moveWaypointForward(WP_GOAL, best_distance);
+				}
+				nav_set_heading_towards_waypoint(WP_GOAL);
+				chooseRandomIncrementAvoidance();
+				best_distance = 0;
+				at_goal = false;
+				}
+			}
 		else
 		{
 			increase_nav_heading(&nav_heading, incrementForAvoidance);
@@ -118,11 +137,6 @@ void visual_sonar_periodic()
 	}
 	return;
 }
-
-uint8_t get_at_goal(){
-	return at_goal;
-}
-
 
 //Strategic navigation functions called in flightplan
 

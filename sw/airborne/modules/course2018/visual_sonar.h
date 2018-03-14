@@ -51,7 +51,7 @@
 #endif
 
 #ifndef VISUAL_SONAR_SQUARE_HEIGHT
-#define VISUAL_SONAR_SQUARE_HEIGHT 50
+#define VISUAL_SONAR_SQUARE_HEIGHT 100
 #endif
 
 #ifndef VISUAL_SONAR_SQUARE_WIDTH
@@ -67,7 +67,6 @@
 
 extern void visual_sonar_init(void);
 extern void visual_sonar_periodic(void);
-extern uint8_t get_at_goal(void);
 extern uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters);
 extern uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
 extern uint8_t increase_nav_heading(int32_t *heading, float incrementDegrees);
@@ -91,6 +90,7 @@ extern uint8_t squarewidth;
 extern float square_th;
 extern float m_to_go;
 extern uint8_t at_goal;
+extern float best_distance;
 
 extern struct video_listener *listener;
 
