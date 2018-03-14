@@ -82,11 +82,11 @@ float pix_to_m(uint16_t pixels)
 	{
 		uint16_t focal = 250; 																		//focal distance camera in pixels
 		uint16_t scrheight = 245; 																	//camera screen height in pixels
-		float theta = stateGetNedToBodyEulers_f()->theta; 																			//pitch angle in radians (SHOULD BE CHANGED TO ACTUAL REAL-TIME PITCH ANGLE)
-		meters = (focal+(scrheight/2-pixels)*theta)/(scrheight/2-pixels-focal*theta); 				//analytical with pitch angle theta
-		meters -= 1.; 																				//One meter of safety margin
+		float theta = 0; //stateGetNedToBodyEulers_f()->theta; 																			//pitch angle in radians (SHOULD BE CHANGED TO ACTUAL REAL-TIME PITCH ANGLE)
+		meters = ((float)focal+((float)scrheight/2.-(float)pixels)*theta)/((float)scrheight-(float)pixels-(float)focal*theta); 				//analytical with pitch angle theta
+		meters -= 0.; 																				//One meter of safety margin
 	}
-	return meters;
+	if(meters<0) return 0; else return meters;
 }
 
 //Generates YUV image from original bebop image
