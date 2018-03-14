@@ -80,13 +80,15 @@ float pix_to_m(uint16_t pixels)
 	float meters = 0.; //Initialize distance at zero, since the function is only valid for pixels>0
 	if (pixels>0)
 	{
-		uint16_t focal = 250; 																		//focal distance camera in pixels
-		uint16_t scrheight = 245; 																	//camera screen height in pixels
-		float theta = 0; //stateGetNedToBodyEulers_f()->theta; 																			//pitch angle in radians (SHOULD BE CHANGED TO ACTUAL REAL-TIME PITCH ANGLE)
-		meters = ((float)focal+((float)scrheight/2.-(float)pixels)*theta)/((float)scrheight-(float)pixels-(float)focal*theta); 				//analytical with pitch angle theta
-		meters -= 0.; 																				//One meter of safety margin
+		float aggression = 0.7;
+		uint16_t focal = 250; 													//focal distance camera in pixels
+		uint16_t scrheight = 245; 												//camera screen height in pixels
+		float theta = stateGetNedToBodyEulers_f()->theta; 						//pitch angle in radians (SHOULD BE CHANGED TO ACTUAL REAL-TIME PITCH ANGLE)
+		meters = ((float)focal+((float)scrheight/2.-(float)pixels)*theta)/((float)scrheight/2.-(float)pixels-(float)focal*theta); 				//analytical with pitch angle theta																				//One meter of safety margin
+		if ((meters<0.) or (meters>5.)) meters = 5.; 							//Capping the function output
+		meters *= aggression;													//Setting controller aggression
 	}
-	if(meters<0) return 0; else return meters;
+	return meters;
 }
 
 //Generates YUV image from original bebop image
