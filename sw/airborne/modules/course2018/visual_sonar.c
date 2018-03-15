@@ -102,22 +102,23 @@ void visual_sonar_periodic()
 	// you want to turn a certain amount of degrees
 	safeToGoForwards = m_to_go > 0.5;
 	//VERBOSE_PRINT("Pixel count threshold: %d safe: %d \n", color_count, tresholdColorCount, safeToGoForwards);
-	if(at_goal==false){
+	if(!at_goal){
 		if(pix_to_go==0){
 			waypoint_set_here_2d(WP_ATGOAL);
+			waypoint_set_here_2d(WP_GOAL);
 			at_goal = true;
 		}
 	}
-	if(at_goal){
+	if(at_goal && (sqrt(pow(stateGetSpeedNed_f()->x,2)+pow(stateGetSpeedNed_f()->y,2))) <0.15){
 		if(safeToGoForwards)
 		{
-			int r = rand()%20;
-			if(r==1){
+			int r = rand()%10;
+			if(r!=1){
 				if(m_to_go > best_distance){
 					best_distance = m_to_go;
 					moveWaypointForward(WP_GOAL, best_distance);
+					increase_nav_heading(&nav_heading, incrementForAvoidance);
 				}
-				increase_nav_heading(&nav_heading, incrementForAvoidance);
 			}
 			else{
 				if(m_to_go > best_distance){
