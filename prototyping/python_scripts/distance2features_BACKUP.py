@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-
+import sys
 
 
 plt.close("all")
@@ -18,7 +18,7 @@ plt.close("all")
 ########## Parameters to input ##############
 percentage_height = 0.5
 n_horizontal_portions = 3
-focal_length = (1/2.2) * np.sqrt(3800 * 3180) #Be sure to enter this in pixels-> ...photo def 3800x3188 
+focal_length = np.sqrt(3800 * 3180) #Be sure to enter this in pixels, since photo def 3800x3188 
 
 ########## Import two consecutive images/converting gray scale ##############
 img1 = cv2.imread('Optic_flow_2m.jpg')
@@ -44,6 +44,8 @@ def portion_segment_image(percentage_height,n_horizontal_portions, image):
     bottom_right_corner_y = int(np.ceil(0.5*(1 + percentage_height)*shape_image[0]))
     middle_section_image = image[top_left_corner_y:bottom_right_corner_y,:]
     
+    all_corners = []
+    
     width_segment = int(np.ceil(shape_image[1]/n_horizontal_portions))
     for i in range(n_horizontal_portions):
         if i != n_horizontal_portions - 1:
@@ -60,21 +62,140 @@ def portion_segment_image(percentage_height,n_horizontal_portions, image):
         plt.figure()
         plt.imshow(segment, cmap='gray')
         plt.show()
-      
+        # apply corner detector to segments
+        maxCorners = 20
+        outputs = cv2.goodFeaturesToTrack(segment, maxCorners, 0.01, 50)
+        segment_corners = []
+        for j in range(maxCorners):
+            try:        
+#                print j
+                xy = outputs[j,0,:]
+                x_corner = xy[0] + i*width
+                y_corner = xy[1] # since scatter is from bottom to top
+                corner = [x_corner,y_corner]
+                all_corners.append(np.array(corner))
+                segment_corners.append(np.array(xy))
+            except:
+                pass
+        segment_corners = np.array(segment_corners)
+        plt.scatter(x = segment_corners[:,0],y = segment_corners[:,1], c='r', s=40)
+        plt.show()
+        
+    all_corners = np.array(all_corners)
                 
-    return middle_section_image
-
-middle_section_image1 = portion_segment_image(percentage_height,n_horizontal_portions, grayscale1)
-middle_section_image2 = portion_segment_image(percentage_height,n_horizontal_portions, grayscale2)
+    return middle_section_image, all_corners
 
 
+#######################################################
 
-# Initiate ORB detector
+########## Distance to feature calculation ##############
+# =============================================================================
+# The function will produce a range map based on the optical flow data between 
+# two consecutive images. It uses the detected corners in the images as optical 
+# flow points. Assuming that the focus of expansion is in the middle of the
+# image due to a straight path of the drone.
+# =============================================================================
+def distToFeatures(corners1, corners2, img_width, img_height, focal_length, velocity = 1.0, d_frames = 0.2): #!!!! later distance between frames can be made a function of velocity and frame rate of the camera
+    
+                
+    shape_corners1 = np.shape(corners1)
+    shape_corners2 = np.shape(corners2)
+    
+    if shape_corners1[0] != shape_corners2[0]: # not the same amount of corners tracked in both images
+        if shape_corners1[0] > shape_corners2[0]:
+            corners1 = corners1[0:(shape_corners2[0]-1),:]
+            shape_corners1 = np.shape(corners1)
+        else:
+            corners2 = corners2[0:(shape_corners1[0]-1),:]
+            shape_corners2 = np.shape(corners2)
+    else: pass
+        
+    # transforming coordinate frame for corner location in the image
+    corners1[:,0] = -(corners1[:,0]) + np.ceil(img_width/2)
+    corners1[:,1] = -(corners1[:,1]) + np.ceil(img_height/2)
+    corners2[:,0] = -(corners2[:,0]) + np.ceil(img_width/2)
+    corners2[:,1] = -(corners2[:,1]) + np.ceil(img_height/2)
+    
+    # time difference between frames
+    dt = d_frames/velocity
+    
+    TTC_all_corners = []
+    for i in range(shape_corners1[0]):
+        x_corner1 = corners1[i,0] # current corner in image1
+        y_corner1 = corners1[i,1]
+        x_corner2 = corners2[i,0] # current corner in image2
+        y_corner2 = corners2[i,1]
+        
+        l_corner1 = math.sqrt(x_corner1**2 + y_corner1**2) # distance of corner to center of image
+        l_corner2 = math.sqrt(x_corner2**2 + y_corner2**2)
+        
+        phi1 = math.atan2(l_corner1, focal_length) # radians
+        phi2 = math.atan2(l_corner2, focal_length)
+        dphi = abs(phi2-phi1)
+        phi_dot = dphi/dt
+        
+        # time to contact/passing calculations for the current corner
+        TTC = (math.cos(phi1)*math.sin(phi1))/phi_dot
+        TTC_all_corners.append(np.array([TTC]))
+        
+    TTC_all_corners = np.array(TTC_all_corners)
+    
+    # calculate the positions of the detected corners
+    Z = velocity*TTC_all_corners # optical axis of the camera frame (distance of corner)
+    X = np.reshape(corners1[:,0], (60,1))*Z/focal_length # positive to the left of the camera
+    Y = np.reshape(corners1[:,1], (60,1))*Z/focal_length # positive to the top of the camera
+    
+    return Z
+
+middle_section_image1, corners1 = portion_segment_image(percentage_height,n_horizontal_portions, gray1)
+middle_section_image2, corners2 = portion_segment_image(percentage_height,n_horizontal_portions, gray2)
+
+# finally output the result through pyplot in the current window
+#plt.figure('Image1')
+#plt.imshow(middle_section_image1, cmap='gray')
+#plt.scatter(x = corners1[:,0],y = corners1[:,1], c='r', s=40)
+#plt.show()
+#
+#plt.figure('Image2')
+#plt.imshow(middle_section_image2, cmap='gray')
+#plt.scatter(x = corners2[:,0],y = corners2[:,1], c='r', s=40)
+#plt.show()
+
+#Z = distToFeatures(corners1, corners2, shape_image[1], shape_image[0], focal_length)
+
+###########################################################
+############## Function to check for size #################
+###########################################################
+
+## dilate the thresholded image to fill in holes, then find contours
+## on thresholded image
+#thresh = cv2.dilate(grayscale, None, iterations=2)
+#(cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+#plt.figure()
+#plt.imshow(grayscale, cmap='gray')
+#plt.show()
+## loop over the contours
+#for c in cnts:
+#    print cv2.contourArea(c)	
+#    if cv2.contourArea(c) < 500: # if the contour is too small, ignore it
+#		continue
+## compute the bounding box for the contour, draw it on the frame,
+## and update the text
+#(x, y, w, h) = cv2.boundingRect(c)
+#cv2.rectangle(grayscale, (x, y), (x + w, y + h), (0, 255, 0), 2)
+#text = "Occupied"
+
+#####################################################################################
+############### Descriptor matchers in OpenCV #######################################
+#####################################################################################
+# see this https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_feature2d/py_feature_homography/py_feature_homography.html
+
+# Initiate SIFT detector
 orb = cv2.ORB()
 
 # find the keypoints and descriptors with SIFT
-kp1, des1 = orb.detectAndCompute(middle_section_image1,None) #watch out for the floats!
-kp2, des2 = orb.detectAndCompute(middle_section_image2,None)
+kp1, des1 = orb.detectAndCompute(grayscale1,None) #watch out for the floats!
+kp2, des2 = orb.detectAndCompute(grayscale2,None)
 
 # create BFMatcher object
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
@@ -85,10 +206,6 @@ matches = bf.match(des1,des2)
 # Sort them in the order of their distance.
 matches = sorted(matches, key = lambda x:x.distance)
 
-##################################################################################
-##################################################################################
-##################################################################################
-##################################################################################
 # Draw first 10 matches.
 def drawMatches(img1, kp1, img2, kp2, matches):
     """
@@ -173,30 +290,25 @@ def drawMatches(img1, kp1, img2, kp2, matches):
     cv2.destroyWindow('Matched Features')
 
     # Also return the image if you'd like a copy
-    return out , kp1_x, kp2_x, kp1_y, kp2_y
+    return out , kpx_1, kpx_2, kpy_1, kpy_2
 
 
-img3, kpx_1, kpx_2, kpy_1, kpy_2 = drawMatches(middle_section_image1,kp1,middle_section_image2,kp2,matches[:30])
+img3, kpx_1, kpx_2, kpy_1, kpy_2 = drawMatches(grayscale1,kp1,grayscale2,kp2,matches[:10])
 
 plt.imshow(img3),plt.show()
 
+##################################################################################
+##########################
 
-########## Distance to feature calculation ##############
-# =============================================================================
-# The function will produce a range map based on the optical flow data between 
-# two consecutive images. It uses the detected corners in the images as optical 
-# flow points. Assuming that the focus of expansion is in the middle of the
-# image due to a straight path of the drone.
-# =============================================================================
 def distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, img_width, img_height, focal_length, velocity = 1.0, d_frames = 0.2): #!!!! later distance between frames can be made a function of velocity and frame rate of the camera
     
     n_keypoints = len(kpx_1)             
 
     # transforming coordinate frame for corner location in the image
-    kpx_1 = -1.0*np.array(kpx_1) + np.ceil(img_width/2)*np.ones(np.shape(kpx_1))
-    kpy_1 = -1*np.array(kpy_1) + np.ceil(img_height/2)*np.ones(np.shape(kpx_1))
-    kpx_2 = -1*np.array(kpx_2) + np.ceil(img_width/2)*np.ones(np.shape(kpx_1))
-    kpy_2 = -1*np.array(kpy_2) + np.ceil(img_height/2)*np.ones(np.shape(kpx_1))
+    corners1[:,0] = -(corners1[:,0]) + np.ceil(img_width/2)
+    corners1[:,1] = -(corners1[:,1]) + np.ceil(img_height/2)
+    corners2[:,0] = -(corners2[:,0]) + np.ceil(img_width/2)
+    corners2[:,1] = -(corners2[:,1]) + np.ceil(img_height/2)
     
     # time difference between frames
     dt = d_frames/velocity
@@ -224,39 +336,12 @@ def distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, img_width, img_height, focal_le
     
     # calculate the positions of the detected corners
     Z = velocity*TTC_all_corners # optical axis of the camera frame (distance of corner)
-#    X = np.reshape(kpx_1, (60,1))*Z/focal_length # positive to the left of the camera
-#    Y = np.reshape(kpy_1, (60,1))*Z/focal_length # positive to the top of the camera
+    X = np.reshape(corners1[:,0], (60,1))*Z/focal_length # positive to the left of the camera
+    Y = np.reshape(corners1[:,1], (60,1))*Z/focal_length # positive to the top of the camera
     
     return Z
-
-shape_image = np.shape(middle_section_image1)
-Z = distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, shape_image[1], shape_image[0], focal_length)
-
-# annotate
+Z = distToFeatures(kpx_1, kpx_2, kpy_1, kpy_2, shape_image[1], shape_image[0], focal_length)
 
 
 
-# finally output the result through pyplot in the current window
-plt.figure('Image1')
-
-#plt.scatter(x = corners1[:,0],y = corners1[:,1], c='r', s=40)
-for i in range(len(kpx_1)):
-    x = int(kpx_1[i])
-    y = int(kpy_1[i])
-    z = np.round(float(Z[i]))
-    print x
-    fontface = cv2.FONT_HERSHEY_SIMPLEX
-    fontscale = 1
-    fontcolor = (255, 255, 255)
-    cv2.putText(middle_section_image1,str(z),(x,y), fontface, fontscale, fontcolor)
-plt.imshow(middle_section_image1, cmap='gray')
-plt.show()
-
-#
-#plt.figure('Image2')
-#plt.imshow(middle_section_image2, cmap='gray')
-#plt.scatter(x = corners2[:,0],y = corners2[:,1], c='r', s=40)
-#plt.show()
-
-#Z = distToFeatures(corners1, corners2, shape_image[1], shape_image[0], focal_length)
 
