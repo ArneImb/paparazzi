@@ -50,8 +50,12 @@
 #define VISUAL_SONAR_MAXCR 138
 #endif
 
-#ifndef VISUAL_SONAR_SQUARE_HEIGHT
-#define VISUAL_SONAR_SQUARE_HEIGHT 150
+#ifndef VISUAL_SONAR_SQUARE_HEIGHT_MAX
+#define VISUAL_SONAR_SQUARE_HEIGHT_MAX 150
+#endif
+
+#ifndef VISUAL_SONAR_SQUARE_HEIGHT_MIN
+#define VISUAL_SONAR_SQUARE_HEIGHT_MIN 50
 #endif
 
 #ifndef VISUAL_SONAR_SQUARE_WIDTH
@@ -76,17 +80,16 @@ extern uint8_t chooseRandomIncrementAvoidance(void);
 
 extern uint8_t color_lum_min;
 extern uint8_t color_lum_max;
-
 extern uint8_t color_cb_min;
 extern uint8_t color_cb_max;
-
 extern uint8_t color_cr_min;
 extern uint8_t color_cr_max;
 
 extern uint16_t pix_to_go;
 
-extern uint8_t squareheight;
-extern uint8_t squarewidth;
+extern uint16_t square_height_min;
+extern uint16_t square_height_max;
+extern uint8_t square_width;
 extern float square_th;
 extern float m_to_go;
 extern uint8_t at_goal;
