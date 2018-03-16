@@ -176,7 +176,7 @@ def drawMatches(img1, kp1, img2, kp2, matches):
     return out , kp1_x, kp2_x, kp1_y, kp2_y
 
 
-img3, kpx_1, kpx_2, kpy_1, kpy_2 = drawMatches(middle_section_image1,kp1,middle_section_image2,kp2,matches[:30])
+img3, kpx_1, kpx_2, kpy_1, kpy_2 = drawMatches(middle_section_image1,kp1,middle_section_image2,kp2,matches[:])
 
 plt.imshow(img3),plt.show()
 
@@ -224,13 +224,13 @@ def distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, img_width, img_height, focal_le
     
     # calculate the positions of the detected corners
     Z = velocity*TTC_all_corners # optical axis of the camera frame (distance of corner)
-#    X = np.reshape(kpx_1, (60,1))*Z/focal_length # positive to the left of the camera
-#    Y = np.reshape(kpy_1, (60,1))*Z/focal_length # positive to the top of the camera
+    X = kpx_1*Z/focal_length # positive to the left of the camera
+    Y = kpy_1*Z/focal_length # positive to the top of the camera
     
-    return Z
+    return X, Y, Z
 
 shape_image = np.shape(middle_section_image1)
-Z = distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, shape_image[1], shape_image[0], focal_length)
+X, Y, Z = distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, shape_image[1], shape_image[0], focal_length)
 
 # annotate
 
