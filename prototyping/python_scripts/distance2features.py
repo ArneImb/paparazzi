@@ -18,7 +18,7 @@ plt.close("all")
 ########## Parameters to input ##############
 percentage_height = 0.5
 n_horizontal_portions = 3
-focal_length = (1/2.2) * np.sqrt(3800 * 3180) #Be sure to enter this in pixels-> ...photo def 3800x3188 
+focal_length = (1/2.2) * np.sqrt(1088**2 + 1920**2) #Be sure to enter this in pixels-> ...photo def 3800x3188 
 
 ########## Import two consecutive images/converting gray scale ##############
 img1 = cv2.imread('Optic_flow_2m.jpg')
@@ -57,9 +57,9 @@ def portion_segment_image(percentage_height,n_horizontal_portions, image):
         segment = middle_section_image[:,start_segment_x:end_segment_x] #top_left_corner_y:bottom_right_corner_y
         
                                       
-        plt.figure()
-        plt.imshow(segment, cmap='gray')
-        plt.show()
+#        plt.figure()
+#        plt.imshow(segment, cmap='gray')
+#        plt.show()
       
                 
     return middle_section_image
@@ -70,7 +70,7 @@ middle_section_image2 = portion_segment_image(percentage_height,n_horizontal_por
 
 
 # Initiate ORB detector
-orb = cv2.ORB()
+orb = cv2.ORB_create()
 
 # find the keypoints and descriptors with SIFT
 kp1, des1 = orb.detectAndCompute(middle_section_image1,None) #watch out for the floats!
