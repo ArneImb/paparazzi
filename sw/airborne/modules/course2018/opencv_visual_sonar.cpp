@@ -80,7 +80,7 @@ float pix_to_m(uint16_t pixels)
 	float meters = 0.; //Initialize distance at zero, since the function is only valid for pixels>0
 	if (pixels>0)
 	{
-		float aggression = 0.7;
+		float aggression = 0.5;
 		uint16_t focal = 250; 													//focal distance camera in pixels
 		uint16_t scrheight = 245; 												//camera screen height in pixels
 		float theta = stateGetNedToBodyEulers_f()->theta; 						//pitch angle in radians (SHOULD BE CHANGED TO ACTUAL REAL-TIME PITCH ANGLE)

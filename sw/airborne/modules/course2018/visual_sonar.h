@@ -51,7 +51,7 @@
 #endif
 
 #ifndef VISUAL_SONAR_SQUARE_HEIGHT
-#define VISUAL_SONAR_SQUARE_HEIGHT 125
+#define VISUAL_SONAR_SQUARE_HEIGHT 150
 #endif
 
 #ifndef VISUAL_SONAR_SQUARE_WIDTH
@@ -59,7 +59,7 @@
 #endif
 
 #ifndef VISUAL_SONAR_TH
-#define VISUAL_SONAR_TH 0.9
+#define VISUAL_SONAR_TH 0.95
 #endif
 
 #include <inttypes.h>
@@ -91,6 +91,7 @@ extern float square_th;
 extern float m_to_go;
 extern uint8_t at_goal;
 extern float best_distance;
+extern uint8_t static_running;
 
 extern struct video_listener *listener;
 
