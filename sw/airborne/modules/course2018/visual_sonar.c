@@ -74,6 +74,7 @@ uint8_t safeToGoForwards = false;
 uint8_t at_goal = false;
 float best_distance = 0;
 uint8_t static_running = false;
+uint8_t safe_heading = false;
 
 // Function
 struct image_t *opencv_func(struct image_t *img);
@@ -126,7 +127,7 @@ void visual_sonar_periodic()
 					best_distance = m_to_go;
 					moveWaypointForward(WP_GOAL, best_distance);
 				}
-				nav_set_heading_towards_waypoint(WP_GOAL);
+				nav_set_heading_towards_goal();
 				chooseRandomIncrementAvoidance();
 				best_distance = 0;
 				at_goal = false;
@@ -213,4 +214,11 @@ uint8_t chooseRandomIncrementAvoidance()
   return false;
 }
 
-
+void nav_set_heading_towards_goal()
+{
+  struct FloatVect2 target = {WaypointX(WP_GOAL), WaypointY(WP_GOAL)};
+  struct FloatVect2 pos_diff;
+  VECT2_DIFF(pos_diff, target, *stateGetPositionEnu_f());
+  float heading_f = atan2f(pos_diff.x, pos_diff.y);
+  nav_heading = ANGLE_BFP_OF_REAL(heading_f);
+}

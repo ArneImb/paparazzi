@@ -117,6 +117,7 @@
     </block>
     <block name="GoGoal">
       <exception cond="at_goal" deroute="AtGoal"/>
+      <call_once fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
       <go from="ATGOAL" wp="GOAL" hmode="route"  approaching_time="0"/>
       <call_once fun="NavCopyWaypoint(WP_ATGOAL,WP_GOAL)"/>
       <set var="at_goal" value="true"/>
