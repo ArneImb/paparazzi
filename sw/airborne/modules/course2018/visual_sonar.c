@@ -108,7 +108,7 @@ void visual_sonar_periodic()
 	if(!at_goal && static_running){
 		if(pix_to_go==0){
 			waypoint_set_here_2d(WP_ATGOAL);
-			waypoint_set_here_2d(WP_GOAL);
+			//waypoint_set_here_2d(WP_GOAL);
 			at_goal = true;
 		}
 	}
@@ -120,8 +120,8 @@ void visual_sonar_periodic()
 				if(m_to_go > best_distance){
 					best_distance = m_to_go;
 					moveWaypointForward(WP_GOAL, best_distance);
-					increase_nav_heading(&nav_heading, incrementForAvoidance);
 				}
+				increase_nav_heading(&nav_heading, incrementForAvoidance);
 			}
 			else{
 				if(m_to_go >= best_distance){
