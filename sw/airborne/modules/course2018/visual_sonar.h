@@ -76,6 +76,8 @@ extern uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
 extern uint8_t increase_nav_heading(int32_t *heading, float incrementDegrees);
 extern uint8_t chooseRandomIncrementAvoidance(void);
 extern void nav_set_heading_towards_goal();
+extern void compute_dist2_to_goal(void);
+extern void check_goal_heading(float heading_diff_limit);
 // extern void visual_sonar_periodic();
 
 
@@ -96,6 +98,9 @@ extern float m_to_go;
 extern uint8_t at_goal;
 extern float best_distance;
 extern uint8_t static_running;
+extern uint8_t forward_heading;
+extern uint8_t set_heading;
+extern float dist2_goal;
 
 extern struct video_listener *listener;
 
