@@ -78,6 +78,7 @@ uint8_t static_running = false;
 uint8_t safe_heading = false;
 uint8_t forward_heading = false;
 uint8_t set_heading = false;
+uint8_t stabalized = false;
 float dist2_goal;
 
 // Function
@@ -111,6 +112,7 @@ void visual_sonar_periodic()
 	if(!at_goal && static_running){
 		compute_dist2_to_goal();
 		if(!safeToGoForwards){
+			waypoint_set_here_2d(WP_GOAL);
 			waypoint_set_here_2d(WP_ATGOAL);
 			//waypoint_set_here_2d(WP_GOAL);
 			at_goal = true;
@@ -119,11 +121,11 @@ void visual_sonar_periodic()
 			at_goal=true;
 		}
 	}
-	if(at_goal && !set_heading && (sqrtf(pow(stateGetSpeedNed_f()->x,2)+pow(stateGetSpeedNed_f()->y,2))) <0.15){
+	if(at_goal && stabalized &&!set_heading && (sqrtf(pow(stateGetSpeedNed_f()->x,2)+pow(stateGetSpeedNed_f()->y,2))) <0.15){
 		if(safeToGoForwards)
 		{
 			safe_heading = true;
-			int r = rand()%10;
+			int r = rand()%5;
 			if(r!=1){
 				if(m_to_go > best_distance){
 					best_distance = m_to_go;
@@ -136,20 +138,20 @@ void visual_sonar_periodic()
 					best_distance = m_to_go;
 					moveWaypointForward(WP_GOAL, best_distance);
 				}
-				nav_set_heading_towards_goal();
+				//nav_set_heading_towards_goal();
 				chooseRandomIncrementAvoidance();
 				best_distance = 0;
-				set_heading = true;
-				//at_goal = false;
+				//set_heading = true;
+				at_goal = false;
 				safe_heading = false;
 				}
 			}
-		if(rand()%10 == 1 && safe_heading){
-			nav_set_heading_towards_goal();
+		if(rand()%5 == 1 && safe_heading){
+			//nav_set_heading_towards_goal();
 			chooseRandomIncrementAvoidance();
 			best_distance = 0;
-			set_heading = true;
-			//at_goal = false;
+			//set_heading = true;
+			at_goal = false;
 			safe_heading = false;
 		}
 		else

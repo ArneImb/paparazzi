@@ -106,17 +106,31 @@
     </block>
    	<block key="g" name="START" strip_button="Go" strip_icon="lookfore.png">
       <call_once fun="NavSetWaypointHere(WP_GOAL)"/>
+      <call_once fun="NavSetWaypointHere(WP_ATGOAL)"/>
       <set var="at_goal" value="true"/>
       <set var="static_running" value="true"/>
       <!-- <set var="trajectoryConfidence" value="1"/> -->
     </block>
+    <block name="stabalizing">
+      <set var="stabalized" value="false"/>
+      <stay until="stage_time>2" wp="ATGOAL"/>
+      <set var="stabalized" value="true"/>
+    </block>
     <block name="AtGoal">
       <call_once fun="NavCopyWaypoint(WP_ATGOAL,WP_GOAL)"/>
-      <exception cond="!at_goal" deroute="GoGoal"/>
+      <exception cond="!at_goal" deroute="SetHeading"/>
       <stay wp="ATGOAL"/>
     </block>
+    <block name="SetHeading">
+      <call_once fun="nav_set_heading_towards_goal()"/>
+      <stay until="stage_time>2" wp="ATGOAL"/>
+      
+      <!--  <exception cond="!set_heading" deroute="GoGoal"/> 
+      <stay wp="ATGOAL"/>-->
+      <deroute block="GoGoal"/>
+    </block>
     <block name="GoGoal">
-      <exception cond="at_goal" deroute="AtGoal"/>
+      <exception cond="at_goal" deroute="stabalizing"/>
       <!--  <call_once fun="nav_set_heading_towards_waypoint(WP_GOAL)"/> -->
       <stay wp="GOAL"/>
       <!--  <go from="ATGOAL" wp="GOAL" hmode="route"  approaching_time="0"/>
