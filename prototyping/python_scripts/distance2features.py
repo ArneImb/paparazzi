@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-
+from mpl_toolkits.mplot3d import Axes3D
 
 
 plt.close("all")
@@ -18,8 +18,9 @@ plt.close("all")
 ########## Parameters to input ##############
 percentage_height = 0.5
 n_horizontal_portions = 3
-focal_length = (1/2.2) * np.sqrt(3800 * 3180) #Be sure to enter this in pixels-> ...photo def 3800x3188 
-
+focal_length_x = 1188 #Be sure to enter this in pixels-> ...photo def 3800x3188 
+focal_length_y = 1203
+focal_length = np.mean([focal_length_x, focal_length_y])
 ########## Import two consecutive images/converting gray scale ##############
 img1 = cv2.imread('Optic_flow_2m.jpg')
 grayscale1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
@@ -45,6 +46,10 @@ def portion_segment_image(percentage_height,n_horizontal_portions, image):
     middle_section_image = image[top_left_corner_y:bottom_right_corner_y,:]
     
     width_segment = int(np.ceil(shape_image[1]/n_horizontal_portions))
+    
+ 
+    segment_coordinates_array = np.empty((0,2), float)
+    print(type(segment_coordinates_array))
     for i in range(n_horizontal_portions):
         if i != n_horizontal_portions - 1:
             width = width_segment
@@ -54,43 +59,80 @@ def portion_segment_image(percentage_height,n_horizontal_portions, image):
             width = shape_image[1] - (n_horizontal_portions - 1)*width_segment
             start_segment_x = i*width_segment
             end_segment_x = (i+1)*width
-        segment = middle_section_image[:,start_segment_x:end_segment_x] #top_left_corner_y:bottom_right_corner_y
-        
-                                      
-        plt.figure()
-        plt.imshow(segment, cmap='gray')
-        plt.show()
-      
+                            
+        segment_coordinates = np.array([start_segment_x, end_segment_x])
+        segment_coordinates_array = np.vstack((segment_coordinates_array,segment_coordinates))
                 
-    return middle_section_image
+    return middle_section_image, segment_coordinates_array
 
-middle_section_image1 = portion_segment_image(percentage_height,n_horizontal_portions, grayscale1)
-middle_section_image2 = portion_segment_image(percentage_height,n_horizontal_portions, grayscale2)
+middle_section_image1, segment_coordinates_array1 = portion_segment_image(percentage_height,n_horizontal_portions, grayscale1)
+middle_section_image2, segment_coordinates_array2 = portion_segment_image(percentage_height,n_horizontal_portions, grayscale2)
 
 
 
-# Initiate ORB detector
-orb = cv2.ORB()
 
-# find the keypoints and descriptors with SIFT
-kp1, des1 = orb.detectAndCompute(middle_section_image1,None) #watch out for the floats!
-kp2, des2 = orb.detectAndCompute(middle_section_image2,None)
 
-# create BFMatcher object
-bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-# Match descriptors.
-matches = bf.match(des1,des2)
 
-# Sort them in the order of their distance.
-matches = sorted(matches, key = lambda x:x.distance)
+def get_orb_matches_segments(middle_image_portion1, middle_image_portion2, segment_coordinates_array):
+    
+    n_segments = len(segment_coordinates_array)
+    kp1_coordinates = np.empty((0,2), float)
+    kp2_coordinates = np.empty((0,2), float)
+    all_matches_list = []
+
+    for i in range(n_segments):
+    
+        start_segment_x = segment_coordinates_array[i,0]
+        end_segment_x = segment_coordinates_array[i,1]
+        segment1 = middle_image_portion1[:,int(start_segment_x):int(end_segment_x)]
+        segment2 = middle_image_portion2[:,int(start_segment_x):int(end_segment_x)]
+        # Initiate ORB detector
+        orb = cv2.ORB_create()
+        
+        # find the keypoints and descriptors with SIFT
+        kp1, des1 = orb.detectAndCompute(segment1,None) #watch out for the floats!
+        kp2, des2 = orb.detectAndCompute(segment2,None)
+        
+        # create BFMatcher object
+        bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        
+        # Match descriptors.
+        matches = bf.match(des1,des2)
+        
+        # Sort them in the order of their distance.
+        matches = sorted(matches, key = lambda x:x.distance)
+        print(np.shape(matches))
+        all_matches_list.extend(matches)
+        
+
+        # For each pair of points we have between both images
+        # draw circles, then connect a line between them
+        for mat in matches:
+    
+            # Get the matching keypoints for each of the images
+            img1_idx = mat.queryIdx
+            img2_idx = mat.trainIdx
+    
+            # x - columns
+            # y - rows
+            (x1,y1) = kp1[img1_idx].pt
+            x1 = x1 + start_segment_x
+            (x2,y2) = kp2[img2_idx].pt
+            x2 = x2 + start_segment_x
+            kp1_coordinates = np.vstack((kp1_coordinates,np.array([x1,y1])))
+            kp2_coordinates = np.vstack((kp2_coordinates,[x2,y2]))
+
+    return kp1, kp2, all_matches_list, kp1_coordinates, kp2_coordinates
+        
+kp1, kp2, matches, kp1_coordinates, kp2_coordinates = get_orb_matches_segments(middle_section_image1, middle_section_image2, segment_coordinates_array1)        
 
 ##################################################################################
 ##################################################################################
 ##################################################################################
 ##################################################################################
 # Draw first 10 matches.
-def drawMatches(img1, kp1, img2, kp2, matches):
+def drawMatches(img1, img2, matches, kp1_coordinates, kp2_coordinates):
     """
     My own implementation of cv2.drawMatches as OpenCV 2.4.9
     does not have this function available but it's supported in
@@ -112,7 +154,6 @@ def drawMatches(img1, kp1, img2, kp2, matches):
     matches - A list of matches of corresponding keypoints through any
               OpenCV keypoint matching algorithm
     """
-
     # Create a new output image that concatenates the two images together
     # (a.k.a) a montage
     rows1 = img1.shape[0]
@@ -131,28 +172,24 @@ def drawMatches(img1, kp1, img2, kp2, matches):
 
     # Place the next image to the right of it
     out[:rows2,cols1:] = np.dstack([img2, img2, img2])
-    
-    kp1_x = []
-    kp1_y = []
-    kp2_x = []
-    kp2_y = []
-    
+
+    kpx_1 = kp1_coordinates[:,0]
+    kpx_2 = kp2_coordinates[:,0]
+    kpy_1 = kp1_coordinates[:,1]
+    kpy_2 = kp2_coordinates[:,1]
+
     # For each pair of points we have between both images
     # draw circles, then connect a line between them
-    for mat in matches:
+    for i in range(len(matches)):
 
-        # Get the matching keypoints for each of the images
-        img1_idx = mat.queryIdx
-        img2_idx = mat.trainIdx
 
         # x - columns
         # y - rows
-        (x1,y1) = kp1[img1_idx].pt
-        (x2,y2) = kp2[img2_idx].pt
-        kp1_x.append(x1)
-        kp1_y.append(y1)
-        kp2_x.append(x2)
-        kp2_y.append(y2)
+        x1 = kpx_1[i]
+        y1 = kpy_1[i]
+        x2 = kpx_2[i]
+        y2 = kpy_2[i]
+
 
         # Draw a small circle at both co-ordinates
         # radius 4
@@ -173,10 +210,9 @@ def drawMatches(img1, kp1, img2, kp2, matches):
     cv2.destroyWindow('Matched Features')
 
     # Also return the image if you'd like a copy
-    return out , kp1_x, kp2_x, kp1_y, kp2_y
+    return out , kpx_1, kpx_2, kpy_1, kpy_2
 
-
-img3, kpx_1, kpx_2, kpy_1, kpy_2 = drawMatches(middle_section_image1,kp1,middle_section_image2,kp2,matches[:])
+img3, kpx_1, kpx_2, kpy_1, kpy_2 = drawMatches(middle_section_image1, middle_section_image2, matches[:], kp1_coordinates, kp2_coordinates)
 
 plt.imshow(img3),plt.show()
 
@@ -197,12 +233,16 @@ def distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, img_width, img_height, focal_le
     kpy_1 = -1*np.array(kpy_1) + np.ceil(img_height/2)*np.ones(np.shape(kpx_1))
     kpx_2 = -1*np.array(kpx_2) + np.ceil(img_width/2)*np.ones(np.shape(kpx_1))
     kpy_2 = -1*np.array(kpy_2) + np.ceil(img_height/2)*np.ones(np.shape(kpx_1))
+    a = kpx_1
     
     # time difference between frames
     dt = d_frames/velocity
     
     TTC_all_corners = []
-    for i in range(n_keypoints):
+    i = 0
+    n_keypoints_changing = n_keypoints
+    while n_keypoints_changing>0:
+   
         x_corner1 = kpx_1[i] # current corner in image1
         y_corner1 = kpy_1[i]
         x_corner2 = kpx_2[i] # current corner in image2
@@ -215,42 +255,60 @@ def distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, img_width, img_height, focal_le
         phi2 = math.atan2(l_corner2, focal_length)
         dphi = abs(phi2-phi1)
         phi_dot = dphi/dt
+
         
-        # time to contact/passing calculations for the current corner
-        TTC = (math.cos(phi1)*math.sin(phi1))/phi_dot
-        TTC_all_corners.append(np.array([TTC]))
-        
-    TTC_all_corners = np.array(TTC_all_corners)
-    
+        try:
+            # time to contact/passing calculations for the current corner            
+            TTC = (math.cos(phi1)*math.sin(phi1))/phi_dot
+            TTC_all_corners.append(TTC)  
+            # update index
+            i = i + 1
+            n_keypoints_changing = n_keypoints_changing - 1
+            
+ 
+        except:
+            # add the index of the 
+            n_keypoints_changing = n_keypoints_changing - 1
+            # Remove the elements that do not 
+            kpx_1 = np.delete(kpx_1, i)
+            kpy_1 = np.delete(kpy_1, i)
+            pass
+
     # calculate the positions of the detected corners
-    Z = velocity*TTC_all_corners # optical axis of the camera frame (distance of corner)
+    Z = 0.5*np.array(TTC_all_corners) # optical axis of the camera frame (distance of corner)
     X = kpx_1*Z/focal_length # positive to the left of the camera
     Y = kpy_1*Z/focal_length # positive to the top of the camera
-    
-    return X, Y, Z
+
+    kpx_1_new = kpx_1
+    kpy_1_new = kpy_1
+
+    return X, Y, Z, a,TTC_all_corners, kpx_1_new, kpy_1_new
 
 shape_image = np.shape(middle_section_image1)
-X, Y, Z = distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, shape_image[1], shape_image[0], focal_length)
+X, Y, Z, a,TTC_all_corners, kpx_1_new, kpy_1_new = distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, shape_image[1], shape_image[0], focal_length, 2.0, 0.2)
 
 # annotate
 
 
 
 # finally output the result through pyplot in the current window
-plt.figure('Image1')
+fig = plt.figure('Positions of features')
+ax = fig.add_subplot(111, projection='3d')
+ax.set_xlim([-5,5])
+ax.set_ylim([-5,5])
+ax.scatter(X, Y, Z)
 
 #plt.scatter(x = corners1[:,0],y = corners1[:,1], c='r', s=40)
-for i in range(len(kpx_1)):
-    x = int(kpx_1[i])
-    y = int(kpy_1[i])
-    z = np.round(float(Z[i]))
-    print x
-    fontface = cv2.FONT_HERSHEY_SIMPLEX
-    fontscale = 1
-    fontcolor = (255, 255, 255)
-    cv2.putText(middle_section_image1,str(z),(x,y), fontface, fontscale, fontcolor)
-plt.imshow(middle_section_image1, cmap='gray')
-plt.show()
+#for i in range(len(kpx_1)):
+#    x = int(kpx_1[i])
+#    y = int(kpy_1[i])
+#    z = np.round(float(Z[i]))
+#    fontface = cv2.FONT_HERSHEY_SIMPLEX
+#    fontscale = 1
+#    fontcolor = (255, 255, 255)
+#    cv2.putText(middle_section_image1,str(z),(x,y), fontface, fontscale, fontcolor)
+#plt.imshow(middle_section_image1, cmap='gray')
+#plt.show()
 
 #
 #plt.figure('Image2')
