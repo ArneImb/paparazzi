@@ -100,6 +100,7 @@ extern float best_distance;
 extern uint8_t static_running;
 extern uint8_t forward_heading;
 extern uint8_t set_heading;
+extern uint8_t stabalized;
 extern float dist2_goal;
 
 extern struct video_listener *listener;
