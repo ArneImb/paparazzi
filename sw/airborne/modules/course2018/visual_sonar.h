@@ -50,8 +50,12 @@
 #define VISUAL_SONAR_MAXCR 138
 #endif
 
-#ifndef VISUAL_SONAR_SQUARE_HEIGHT
-#define VISUAL_SONAR_SQUARE_HEIGHT 125
+#ifndef VISUAL_SONAR_SQUARE_HEIGHT_MAX
+#define VISUAL_SONAR_SQUARE_HEIGHT_MAX 150
+#endif
+
+#ifndef VISUAL_SONAR_SQUARE_HEIGHT_MIN
+#define VISUAL_SONAR_SQUARE_HEIGHT_MIN 50
 #endif
 
 #ifndef VISUAL_SONAR_SQUARE_WIDTH
@@ -59,7 +63,7 @@
 #endif
 
 #ifndef VISUAL_SONAR_TH
-#define VISUAL_SONAR_TH 0.9
+#define VISUAL_SONAR_TH 0.95
 #endif
 
 #include <inttypes.h>
@@ -71,26 +75,32 @@ extern uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters);
 extern uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
 extern uint8_t increase_nav_heading(int32_t *heading, float incrementDegrees);
 extern uint8_t chooseRandomIncrementAvoidance(void);
+extern void nav_set_heading_towards_goal();
+extern void compute_dist2_to_goal(void);
+extern void check_goal_heading(float heading_diff_limit);
 // extern void visual_sonar_periodic();
 
 
 extern uint8_t color_lum_min;
 extern uint8_t color_lum_max;
-
 extern uint8_t color_cb_min;
 extern uint8_t color_cb_max;
-
 extern uint8_t color_cr_min;
 extern uint8_t color_cr_max;
 
 extern uint16_t pix_to_go;
 
-extern uint8_t squareheight;
-extern uint8_t squarewidth;
+extern uint16_t square_height_min;
+extern uint16_t square_height_max;
+extern uint8_t square_width;
 extern float square_th;
 extern float m_to_go;
 extern uint8_t at_goal;
 extern float best_distance;
+extern uint8_t static_running;
+extern uint8_t forward_heading;
+extern uint8_t set_heading;
+extern float dist2_goal;
 
 extern struct video_listener *listener;
 

@@ -60,8 +60,9 @@ uint8_t color_cr_min  = VISUAL_SONAR_MINCR;
 uint8_t color_cr_max  = VISUAL_SONAR_MAXCR;
 
 //Initialize other settings
-uint8_t squareheight = VISUAL_SONAR_SQUARE_HEIGHT;
-uint8_t squarewidth = VISUAL_SONAR_SQUARE_WIDTH;
+uint16_t square_height_min = VISUAL_SONAR_SQUARE_HEIGHT_MIN;
+uint16_t square_height_max = VISUAL_SONAR_SQUARE_HEIGHT_MAX;
+uint8_t square_width = VISUAL_SONAR_SQUARE_WIDTH;
 float square_th = VISUAL_SONAR_TH;
 
 // Create number of pixels to travel variable
@@ -73,6 +74,11 @@ float incrementForAvoidance;
 uint8_t safeToGoForwards = false;
 uint8_t at_goal = false;
 float best_distance = 0;
+uint8_t static_running = false;
+uint8_t safe_heading = false;
+uint8_t forward_heading = false;
+uint8_t set_heading = false;
+float dist2_goal;
 
 // Function
 struct image_t *opencv_func(struct image_t *img);
@@ -102,38 +108,61 @@ void visual_sonar_periodic()
 	// you want to turn a certain amount of degrees
 	safeToGoForwards = m_to_go > 0.5;
 	//VERBOSE_PRINT("Pixel count threshold: %d safe: %d \n", color_count, tresholdColorCount, safeToGoForwards);
-	if(!at_goal){
-		if(pix_to_go==0){
+	if(!at_goal && static_running){
+		compute_dist2_to_goal();
+		if(!safeToGoForwards){
 			waypoint_set_here_2d(WP_ATGOAL);
-			waypoint_set_here_2d(WP_GOAL);
+			//waypoint_set_here_2d(WP_GOAL);
 			at_goal = true;
 		}
+		if(dist2_goal<0.3 && (sqrtf(pow(stateGetSpeedNed_f()->x,2)+pow(stateGetSpeedNed_f()->y,2))) <0.15){
+			at_goal=true;
+		}
 	}
-	if(at_goal && (sqrt(pow(stateGetSpeedNed_f()->x,2)+pow(stateGetSpeedNed_f()->y,2))) <0.15){
+	if(at_goal && !set_heading && (sqrtf(pow(stateGetSpeedNed_f()->x,2)+pow(stateGetSpeedNed_f()->y,2))) <0.15){
 		if(safeToGoForwards)
 		{
+			safe_heading = true;
 			int r = rand()%10;
 			if(r!=1){
 				if(m_to_go > best_distance){
 					best_distance = m_to_go;
 					moveWaypointForward(WP_GOAL, best_distance);
-					increase_nav_heading(&nav_heading, incrementForAvoidance);
 				}
+				increase_nav_heading(&nav_heading, incrementForAvoidance);
 			}
 			else{
-				if(m_to_go > best_distance){
+				if(m_to_go >= best_distance){
 					best_distance = m_to_go;
 					moveWaypointForward(WP_GOAL, best_distance);
 				}
-				nav_set_heading_towards_waypoint(WP_GOAL);
+				nav_set_heading_towards_goal();
 				chooseRandomIncrementAvoidance();
 				best_distance = 0;
-				at_goal = false;
+				set_heading = true;
+				//at_goal = false;
+				safe_heading = false;
 				}
 			}
+		if(rand()%10 == 1 && safe_heading){
+			nav_set_heading_towards_goal();
+			chooseRandomIncrementAvoidance();
+			best_distance = 0;
+			set_heading = true;
+			//at_goal = false;
+			safe_heading = false;
+		}
 		else
 		{
 			increase_nav_heading(&nav_heading, incrementForAvoidance);
+		}
+	}
+	if(at_goal && set_heading){
+		nav_set_heading_towards_goal();
+		check_goal_heading(5);
+		if(forward_heading){
+			set_heading = false;
+			at_goal = false;
 		}
 	}
 	return;
@@ -212,4 +241,39 @@ uint8_t chooseRandomIncrementAvoidance()
   return false;
 }
 
+void nav_set_heading_towards_goal()
+{
+  struct FloatVect2 target = {WaypointX(WP_GOAL), WaypointY(WP_GOAL)};
+  struct FloatVect2 pos_diff;
+  VECT2_DIFF(pos_diff, target, *stateGetPositionEnu_f());
+  float heading_f = atan2f(pos_diff.x, pos_diff.y);
+  nav_heading = ANGLE_BFP_OF_REAL(heading_f);
+}
 
+void compute_dist2_to_goal(void)
+{
+  dist2_goal =  get_dist2_to_waypoint(WP_GOAL);
+}
+
+void check_goal_heading(float heading_diff_limit)
+{
+
+	struct FloatVect2 target = {WaypointX(WP_GOAL), WaypointY(WP_GOAL)};
+	struct FloatVect2 pos_diff;
+	VECT2_DIFF(pos_diff, target, *stateGetPositionEnu_f());
+	float heading_f = atan2f(pos_diff.x, pos_diff.y);
+	float heading_actual = ANGLE_FLOAT_OF_BFP(nav_heading);
+
+	float heading_diff = abs(heading_f-heading_actual);
+
+	if(heading_diff >180){
+		heading_diff = heading_diff-180;
+	}
+
+	if(heading_diff < heading_diff_limit){
+		forward_heading = true;
+	}
+	else{
+		forward_heading = false;
+	}
+}

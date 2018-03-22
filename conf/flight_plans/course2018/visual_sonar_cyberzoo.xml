@@ -90,6 +90,7 @@
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
     </block>
     <block key="r" name="Start Engine">
+      <set var="static_running" value="false"/>
       <call_once fun="NavResurrect()"/>
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
       <call_once fun="NavResurrect()"/>
@@ -105,21 +106,23 @@
     </block>
    	<block key="g" name="START" strip_button="Go" strip_icon="lookfore.png">
       <call_once fun="NavSetWaypointHere(WP_GOAL)"/>
-      <call_once fun="NavSetWaypointHere(WP_ATGOAL)"/>
       <set var="at_goal" value="true"/>
+      <set var="static_running" value="true"/>
       <!-- <set var="trajectoryConfidence" value="1"/> -->
     </block>
     <block name="AtGoal">
+      <call_once fun="NavCopyWaypoint(WP_ATGOAL,WP_GOAL)"/>
       <exception cond="!at_goal" deroute="GoGoal"/>
       <stay wp="ATGOAL"/>
     </block>
     <block name="GoGoal">
       <exception cond="at_goal" deroute="AtGoal"/>
-      <go from="ATGOAL" wp="GOAL" hmode="route"  approaching_time="0"/>
-      <call_once fun="NavCopyWaypoint(WP_ATGOAL,WP_GOAL)"/>
+      <!--  <call_once fun="nav_set_heading_towards_waypoint(WP_GOAL)"/> -->
+      <stay wp="GOAL"/>
+      <!--  <go from="ATGOAL" wp="GOAL" hmode="route"  approaching_time="0"/>
       <set var="at_goal" value="true"/>
       <deroute block="AtGoal"/>
-      <!--  <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="PrepareObstacleRun"/> -->
+      <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="PrepareObstacleRun"/> -->
     </block>
     <block name="PrepareObstacleRun">
       <while cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))">
@@ -134,6 +137,7 @@
       <deroute block="START"/>
     </block>
     <block key="l" name="Land here" strip_button="Land Here" strip_icon="land-right.png">
+      <set var="static_running" value="false"/>
       <call_once fun="NavSetWaypointHere(WP_TD)"/>
       <go wp="TD"/>
       <deroute block="Flare"/>

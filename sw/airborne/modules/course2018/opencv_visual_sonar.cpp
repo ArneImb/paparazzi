@@ -34,6 +34,18 @@ using namespace std;
 using namespace cv;
 #include "modules/computer_vision/opencv_image_functions.h"
 
+float aggression = 0.9;
+uint16_t focal = 250; 																													//focal distance camera in pixels
+uint8_t screen_height = 245;
+
+//Calculates the width of a pixel square
+uint16_t func_square_height(uint16_t pos, uint16_t square_height_min = square_height_min, uint16_t square_height_max = square_height_max)
+{
+	float theta = stateGetNedToBodyEulers_f()->theta;
+	uint16_t square_height = (float)square_height_max-((float)square_height_max-(float)square_height_min)/((float)screen_height/2.)*((float)pos+(float)focal*theta);
+	return square_height;
+}
+
 // Calculates the number of accessible pixels in a square using the integral image of a masked image
 uint16_t number_positives_square(Mat integral_img, uint16_t left, uint16_t right, uint16_t top, uint16_t bottom)
 {
@@ -45,25 +57,25 @@ uint16_t number_positives_square(Mat integral_img, uint16_t left, uint16_t right
 }
 
 //Calculates the number of pixels up to an obstacle by stepping forward in a masked image with pixel blocks
-uint16_t pixels_to_go(Mat mask, uint8_t square_width = squarewidth, uint8_t square_height = squareheight, float threshold = square_th)
+uint16_t pixels_to_go(Mat mask, uint8_t square_width = square_width, uint16_t square_height_min = square_height_min, uint16_t square_height_max = square_height_max, float threshold = square_th)
 {
-	//Define pixel block properties and masked image properties
+	//Define masked image properties
 	int w = mask.size().width; 								//Width of mask in pixels
 	int h = mask.size().height; 							//Height of mask in pixels
 	uint16_t left_pos; 										//Left position of pixel block
-	uint16_t square_area = square_width*square_height; 		//Area of pixel block
 	Mat bin_mask;											//Define binary mask
 	Mat integral_mask; 										//Define integral image of mask
 	cv::threshold(mask, bin_mask, 127, 1, THRESH_BINARY); 	//Set threshold of mask
 	integral(bin_mask,integral_mask); 						//Define integral image of mask
 
-	uint16_t top_pos = (h-square_height)/2;					//Top position of pixel block
-	uint16_t bottom_pos = (h+square_height)/2;				//Bottom position of pixel block
-	uint16_t min_area = threshold*square_area;				//Minimal area of pixel block
-
 	//Step forward and check if the number of accessible pixels stays above a certain threshold
 	for(left_pos = 0; left_pos<=w+square_width; left_pos += square_width)
 	{
+		uint16_t square_height = func_square_height(left_pos);
+		uint16_t square_area = square_width*square_height; 		//Area of pixel block
+		uint16_t top_pos = (h-square_height)/2;					//Top position of pixel block
+		uint16_t bottom_pos = (h+square_height)/2;				//Bottom position of pixel block
+		uint16_t min_area = threshold*square_area;				//Minimal area of pixel block
 		uint16_t right_pos = left_pos + square_width;
 		uint16_t n_postives = number_positives_square(integral_mask, left_pos, right_pos, top_pos, bottom_pos);
 		if(n_postives < min_area)
@@ -79,14 +91,11 @@ float pix_to_m(uint16_t pixels)
 {
 	float meters = 0.; //Initialize distance at zero, since the function is only valid for pixels>0
 	if (pixels>0)
-	{
-		float aggression = 0.7;
-		uint16_t focal = 250; 													//focal distance camera in pixels
-		uint16_t scrheight = 245; 												//camera screen height in pixels
-		float theta = stateGetNedToBodyEulers_f()->theta; 						//pitch angle in radians (SHOULD BE CHANGED TO ACTUAL REAL-TIME PITCH ANGLE)
-		meters = ((float)focal+((float)scrheight/2.-(float)pixels)*theta)/((float)scrheight/2.-(float)pixels-(float)focal*theta); 				//analytical with pitch angle theta																				//One meter of safety margin
-		if ((meters<0.) or (meters>5.)) meters = 5.; 							//Capping the function output
-		meters *= aggression;													//Setting controller aggression
+	{																											//Camera screen height in pixels
+		float theta = stateGetNedToBodyEulers_f()->theta; 																						//Pitch angle in radians
+		meters = ((float)focal+((float)screen_height/2.-(float)pixels)*theta)/((float)screen_height/2.-(float)pixels-(float)focal*theta); 		//Calculate distance																			//One meter of safety margin
+		if ((meters<0.) or (meters>5.)) meters = 5.; 																							//Capping the function output
+		meters *= aggression;																													//Setting controller aggression
 	}
 	return meters;
 }
@@ -102,33 +111,29 @@ int opencv_YCbCr_filter(char *img, int width, int height)
 	//Convert UYUV in paparazzi to YUV opencv
 	cvtColor(M, M_RGB, CV_YUV2RGB_Y422);
 	cvtColor(M_RGB, M, CV_RGB2YUV);
-
 	Mat mask(M.size(), CV_8UC1, Scalar(0));
 
-	//line(M, Point(0,width/2), Point(height,width/2),Scalar(255,255,255), 20);
-	//circle(M,Point(height/2,width/2), 50, Scalar(255,255,255), 10);
 	// Filter YCrCb values
 	inRange(M,
 			Scalar(color_lum_min, color_cb_min, color_cr_min),
 			Scalar(color_lum_max, color_cb_max, color_cr_max),
 			mask);
 
+	//Calculate distance to go
 	pix_to_go = pixels_to_go(mask);
 	m_to_go = pix_to_m(pix_to_go);
 
-	//cvtColor(mask, mask, CV_GRAY2RGB);
-	//cvtColor(M, M, CV_YUV2RGB);
-	//cvtColor(M, M, CV_RGB2GRAY);
-
 	//mask.copyTo(M);
 	bitwise_and(M_RGB,M_RGB,masked_RGB,mask); //in, in, out (cooy to inimg frame)
+	uint16_t square_height_bottom = func_square_height(0);
+	uint16_t square_height_top = func_square_height(pix_to_go);
 
-	rectangle(masked_RGB, Point(0,(height+squareheight)/2), Point(pix_to_go,(height-squareheight)/2), Scalar(255,0,0),2);
+	line(masked_RGB, Point(0,(height+square_height_bottom)/2), Point(pix_to_go,(height+square_height_top)/2), Scalar(0,255,0),2);
+	line(masked_RGB, Point(0,(height-square_height_bottom)/2), Point(pix_to_go,(height-square_height_top)/2), Scalar(0,255,0),2);
 
 	cvtColor(masked_RGB, M, CV_RGB2YUV);
 	//Convert back and save in original image position
 	coloryuv_opencv_to_yuv422(M, img, width, height);
-	//coloryuv_opencv_to_yuv422(mask, img, width, height);
 
 	return 0;
 }
