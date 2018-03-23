@@ -34,7 +34,7 @@ using namespace std;
 using namespace cv;
 #include "modules/computer_vision/opencv_image_functions.h"
 
-float aggression = 0.75;
+float aggression = 0.8;
 uint16_t focal = 250; 																													//focal distance camera in pixels
 uint8_t screen_height = 245;
 

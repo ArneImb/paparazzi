@@ -52,10 +52,10 @@
       !(nav_block >= IndexOfBlock('Land here')) &&
       (autopilot_in_flight() == true) )" deroute="Land here"/>
     <!-- Geofencing XY -->
-    <exception cond="(!InsideCyberZoo(GetPosX(), GetPosY()) &&
+    <!--  <exception cond="(!InsideCyberZoo(GetPosX(), GetPosY()) &&
       !(IndexOfBlock('Holding point') > nav_block) &&
       !(nav_block >= IndexOfBlock('Land here')) &&
-      (autopilot_in_flight() == true) )" deroute="Land here"/>
+      (autopilot_in_flight() == true) )" deroute="Land here"/> -->
     <!-- Geofencing Z 2.5 -->
     <exception cond="((GetPosAlt() > 3.5) &&
       !(IndexOfBlock('Holding point') > nav_block) &&
@@ -102,35 +102,41 @@
     </block>
     <block key="s" name="Standby" strip_button="Standby" strip_icon="home.png">
       <call_once fun="NavSetWaypointHere(WP_STDBY)"/>
+      <set var="status" value="STATUS_STANDBY"/>
       <stay wp="STDBY"/>
     </block>
    	<block key="g" name="START" strip_button="Go" strip_icon="lookfore.png">
       <call_once fun="NavSetWaypointHere(WP_GOAL)"/>
       <call_once fun="NavSetWaypointHere(WP_ATGOAL)"/>
-      <set var="at_goal" value="true"/>
-      <set var="static_running" value="true"/>
+      <set var="status" value="STATUS_STABALIZING"/>
+      <!-- <set var="at_goal" value="true"/>
+      <set var="static_running" value="true"/> -->
       <!-- <set var="trajectoryConfidence" value="1"/> -->
+      <deroute block="stabalizing"/>
     </block>
     <block name="stabalizing">
-      <set var="stabalized" value="false"/>
       <stay until="stage_time>2" wp="ATGOAL"/>
-      <set var="stabalized" value="true"/>
+      <set var="status" value="STATUS_AT_GOAL"/>
+      <deroute block="AtGoal"/>
     </block>
     <block name="AtGoal">
       <call_once fun="NavCopyWaypoint(WP_ATGOAL,WP_GOAL)"/>
-      <exception cond="!at_goal" deroute="SetHeading"/>
+      <exception cond="status==STATUS_SET_HEADING" deroute="SetHeading"/>
       <stay wp="ATGOAL"/>
     </block>
     <block name="SetHeading">
+      <exception cond="status==STATUS_GO_GOAL" deroute="GoGoal"/>
       <call_once fun="nav_set_heading_towards_goal()"/>
-      <stay until="stage_time>2" wp="ATGOAL"/>
-      
+      <stay wp="ATGOAL"/>
+      <!--  <stay until="stage_time>2" wp="ATGOAL"/> -->
+      <!--  <set var="status" value="STATUS_GO_GOAL"/> -->
       <!--  <exception cond="!set_heading" deroute="GoGoal"/> 
       <stay wp="ATGOAL"/>-->
-      <deroute block="GoGoal"/>
+      <!--  <deroute block="GoGoal"/> -->
     </block>
     <block name="GoGoal">
-      <exception cond="at_goal" deroute="stabalizing"/>
+      <exception cond="status==STATUS_STABALIZING" deroute="stabalizing"/>
+      <exception cond="status==STATUS_AT_GOAL" deroute="AtGoal"/>
       <!--  <call_once fun="nav_set_heading_towards_waypoint(WP_GOAL)"/> -->
       <stay wp="GOAL"/>
       <!--  <go from="ATGOAL" wp="GOAL" hmode="route"  approaching_time="0"/>

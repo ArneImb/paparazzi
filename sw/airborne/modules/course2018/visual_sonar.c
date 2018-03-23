@@ -80,6 +80,8 @@ uint8_t forward_heading = false;
 uint8_t set_heading = false;
 uint8_t stabalized = false;
 float dist2_goal;
+uint8_t status;
+float ground_speed;
 
 // Function
 struct image_t *opencv_func(struct image_t *img);
@@ -88,8 +90,6 @@ struct image_t *opencv_func(struct image_t *img)
   if (img->type == IMAGE_YUV422) {
     // Call OpenCV (C++ from paparazzi C function)
 	  opencv_YCbCr_filter((char *) img->buf, img->w, img->h);
-	  VERBOSE_PRINT("pixels to go = %d \n", pix_to_go);
-	  VERBOSE_PRINT("meters to go = %f \n", m_to_go);
   }
   return NULL;
 }
@@ -101,9 +101,35 @@ void visual_sonar_init()
 	listener = cv_add_to_device(&VISUAL_SONAR_CAMERA, opencv_func, VISUAL_SONAR_FPS); //Define camera in module xml
 	chooseRandomIncrementAvoidance();
 	srand(time(NULL));
+	status = STATUS_STANDBY;
 }
 
 void visual_sonar_periodic()
+{
+	safeToGoForwards = m_to_go > 0.5;
+
+	switch(status){
+	case STATUS_STANDBY :
+		break;
+	case STATUS_STABALIZING :
+		break;
+	case STATUS_AT_GOAL :
+		compute_ground_speed();
+		look_around();
+		break;
+	case STATUS_SET_HEADING :
+		check_goal_heading(5);
+		break;
+	case STATUS_GO_GOAL :
+		compute_dist2_to_goal(); //Update distance to goal variable
+		compute_ground_speed();
+		check_at_goal(); // Check if status should be changed to AT_GOAL
+		stop_obstacle(); //Check if it has to stop for obstacles
+		break;
+	}
+}
+
+void visual_sonar_periodic_test()
 {
 	// Check the amount of orange. If this is above a threshold
 	// you want to turn a certain amount of degrees
@@ -263,19 +289,87 @@ void check_goal_heading(float heading_diff_limit)
 	struct FloatVect2 target = {WaypointX(WP_GOAL), WaypointY(WP_GOAL)};
 	struct FloatVect2 pos_diff;
 	VECT2_DIFF(pos_diff, target, *stateGetPositionEnu_f());
-	float heading_f = atan2f(pos_diff.x, pos_diff.y);
-	float heading_actual = ANGLE_FLOAT_OF_BFP(nav_heading);
+	float heading_f = DegOfRad(atan2f(pos_diff.x, pos_diff.y));
+	float heading_actual = DegOfRad(ANGLE_FLOAT_OF_BFP(stateGetNedToBodyEulers_i()->psi));
 
-	float heading_diff = abs(heading_f-heading_actual);
+	float heading_diff = heading_f-heading_actual;
+	VERBOSE_PRINT("hdg diff = %f \n", heading_diff);
 
-	if(heading_diff >180){
-		heading_diff = heading_diff-180;
+	if(heading_diff > 180){
+		heading_diff = -1*(heading_diff-360);
+	}
+
+	if(heading_diff < -180){
+		heading_diff = heading_diff+360;
+	}
+
+	if(heading_diff < 0){
+		heading_diff = heading_diff*-1;
 	}
 
 	if(heading_diff < heading_diff_limit){
-		forward_heading = true;
+		status = STATUS_GO_GOAL;
 	}
-	else{
-		forward_heading = false;
+}
+
+void stop_obstacle(){
+	if(pix_to_go <= 10){
+		moveWaypointForward(WP_GOAL, 0.5*ground_speed);
+		//moveWaypointForward(WP_ATGOAL, 0.25*ground_speed);
+		//waypoint_set_here_2d(WP_GOAL);
+		//waypoint_set_here_2d(WP_ATGOAL);
+		//status = STATUS_STABALIZING;
+		status = STATUS_AT_GOAL;
+	}
+}
+
+void compute_ground_speed(){
+	ground_speed = sqrtf(powf(stateGetSpeedNed_f()->x,2)+powf(stateGetSpeedNed_f()->y,2));
+}
+
+void check_at_goal(){
+	if(dist2_goal<0.3 && ground_speed <0.15){
+		status = STATUS_AT_GOAL;
+	}
+}
+
+void look_around(){
+	if(ground_speed < 0.15){
+		int r = rand()%10; //Change 1 out of 10 that r == 1
+
+		if(safeToGoForwards){
+			safe_heading = true;
+			VERBOSE_PRINT("pixels to go = %d \n", pix_to_go);
+			VERBOSE_PRINT("meters to go = %f \n", m_to_go);
+			if(r==1){
+				if(m_to_go >= best_distance){
+					best_distance = m_to_go;
+					moveWaypointForward(WP_GOAL, best_distance);
+				}
+				chooseRandomIncrementAvoidance();
+				best_distance = 0;
+				safe_heading = false;
+				status = STATUS_SET_HEADING;
+			}
+			else{
+				if(m_to_go > best_distance){
+					best_distance = m_to_go;
+					moveWaypointForward(WP_GOAL, best_distance);
+					}
+				increase_nav_heading(&nav_heading, incrementForAvoidance);
+			}
+		}
+
+		else{
+			if(r == 1 && safe_heading){
+				chooseRandomIncrementAvoidance();
+				best_distance = 0;
+				safe_heading = false;
+				status = STATUS_SET_HEADING;
+			}
+			else{
+				increase_nav_heading(&nav_heading, incrementForAvoidance);
+			}
+		}
 	}
 }
