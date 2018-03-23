@@ -125,7 +125,7 @@ void visual_sonar_periodic()
 		if(safeToGoForwards)
 		{
 			safe_heading = true;
-			int r = rand()%5;
+			int r = rand()%10;
 			if(r!=1){
 				if(m_to_go > best_distance){
 					best_distance = m_to_go;
@@ -146,7 +146,7 @@ void visual_sonar_periodic()
 				safe_heading = false;
 				}
 			}
-		if(rand()%5 == 1 && safe_heading){
+		if(rand()%10 == 1 && safe_heading){
 			//nav_set_heading_towards_goal();
 			chooseRandomIncrementAvoidance();
 			best_distance = 0;
