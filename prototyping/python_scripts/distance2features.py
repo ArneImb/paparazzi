@@ -80,6 +80,7 @@ def get_orb_matches_segments(middle_image_portion1, middle_image_portion2, segme
     kp1_coordinates = np.empty((0,2), float)
     kp2_coordinates = np.empty((0,2), float)
     all_matches_list = []
+    ratios_list = []
 
     for i in range(n_segments):
     
@@ -102,8 +103,8 @@ def get_orb_matches_segments(middle_image_portion1, middle_image_portion2, segme
         
         # Sort them in the order of their distance.
         matches = sorted(matches, key = lambda x:x.distance)
-        print(np.shape(matches))
-        all_matches_list.extend(matches)
+
+
         
 
         # For each pair of points we have between both images
@@ -118,14 +119,20 @@ def get_orb_matches_segments(middle_image_portion1, middle_image_portion2, segme
             # y - rows
             (x1,y1) = kp1[img1_idx].pt
             x1 = x1 + start_segment_x
+            size_kp1 = kp1[img1_idx].size
             (x2,y2) = kp2[img2_idx].pt
             x2 = x2 + start_segment_x
-            kp1_coordinates = np.vstack((kp1_coordinates,np.array([x1,y1])))
-            kp2_coordinates = np.vstack((kp2_coordinates,[x2,y2]))
-
-    return kp1, kp2, all_matches_list, kp1_coordinates, kp2_coordinates
+            size_kp2 = kp2[img2_idx].size
+            ratio = size_kp2/size_kp1
+            if ratio > 1:
+                kp1_coordinates = np.vstack((kp1_coordinates,np.array([x1,y1])))
+                kp2_coordinates = np.vstack((kp2_coordinates,np.array([x2,y2])))
+                all_matches_list.extend([mat])
+                ratios_list.extend([ratio])
+                
+    return kp1, kp2, all_matches_list, ratios_list, kp1_coordinates, kp2_coordinates
         
-kp1, kp2, matches, kp1_coordinates, kp2_coordinates = get_orb_matches_segments(middle_section_image1, middle_section_image2, segment_coordinates_array1)        
+kp1, kp2, all_matches_list, ratios_list, kp1_coordinates, kp2_coordinates = get_orb_matches_segments(middle_section_image1, middle_section_image2, segment_coordinates_array1)        
 
 ##################################################################################
 ##################################################################################
@@ -212,7 +219,7 @@ def drawMatches(img1, img2, matches, kp1_coordinates, kp2_coordinates):
     # Also return the image if you'd like a copy
     return out , kpx_1, kpx_2, kpy_1, kpy_2
 
-img3, kpx_1, kpx_2, kpy_1, kpy_2 = drawMatches(middle_section_image1, middle_section_image2, matches[:], kp1_coordinates, kp2_coordinates)
+img3, kpx_1, kpx_2, kpy_1, kpy_2 = drawMatches(middle_section_image1, middle_section_image2, all_matches_list[:], kp1_coordinates, kp2_coordinates)
 
 plt.imshow(img3),plt.show()
 
@@ -272,10 +279,12 @@ def distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, img_width, img_height, focal_le
             # Remove the elements that do not 
             kpx_1 = np.delete(kpx_1, i)
             kpy_1 = np.delete(kpy_1, i)
+            kpx_2 = np.delete(kpx_2, i)
+            kpy_2 = np.delete(kpy_2, i)
             pass
 
     # calculate the positions of the detected corners
-    Z = 0.5*np.array(TTC_all_corners) # optical axis of the camera frame (distance of corner)
+    Z = velocity*np.array(TTC_all_corners) # optical axis of the camera frame (distance of corner)
     X = kpx_1*Z/focal_length # positive to the left of the camera
     Y = kpy_1*Z/focal_length # positive to the top of the camera
 
@@ -285,30 +294,37 @@ def distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, img_width, img_height, focal_le
     return X, Y, Z, a,TTC_all_corners, kpx_1_new, kpy_1_new
 
 shape_image = np.shape(middle_section_image1)
-X, Y, Z, a,TTC_all_corners, kpx_1_new, kpy_1_new = distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, shape_image[1], shape_image[0], focal_length, 2.0, 0.2)
+X, Y, Z, a,TTC_all_corners, kpx_1_new, kpy_1_new = distToFeaturesv2(kpx_1, kpx_2, kpy_1, kpy_2, shape_image[1], shape_image[0], focal_length, 0.5, 0.2)
 
 # annotate
 
 
 
 # finally output the result through pyplot in the current window
-fig = plt.figure('Positions of features')
+fig = plt.figure('Positions of features 3D')
 ax = fig.add_subplot(111, projection='3d')
 ax.set_xlim([-5,5])
 ax.set_ylim([-5,5])
 ax.scatter(X, Y, Z)
 
-#plt.scatter(x = corners1[:,0],y = corners1[:,1], c='r', s=40)
-#for i in range(len(kpx_1)):
-#    x = int(kpx_1[i])
-#    y = int(kpy_1[i])
-#    z = np.round(float(Z[i]))
-#    fontface = cv2.FONT_HERSHEY_SIMPLEX
-#    fontscale = 1
-#    fontcolor = (255, 255, 255)
-#    cv2.putText(middle_section_image1,str(z),(x,y), fontface, fontscale, fontcolor)
-#plt.imshow(middle_section_image1, cmap='gray')
-#plt.show()
+fig = plt.figure('Positions of features 2D ')
+ax = fig.add_subplot(111)
+ax.set_xlim([-2,2])
+ax.set_ylim([0,2])
+ax.scatter(X, Z)
+
+
+plt.figure()
+for i in range(len(kpx_1_new)):
+    x = int(kpx_1[i])
+    y = int(kpy_1[i])
+    z = np.round(float(Z[i]))
+    fontface = cv2.FONT_HERSHEY_SIMPLEX
+    fontscale = 1
+    fontcolor = (255, 255, 255)
+    cv2.putText(middle_section_image1,str(z),(x,y), fontface, fontscale, fontcolor)
+plt.imshow(middle_section_image1, cmap='gray')
+plt.show()
 
 #
 #plt.figure('Image2')
