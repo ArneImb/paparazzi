@@ -35,18 +35,19 @@ using namespace std;
 using namespace cv;
 #include "modules/computer_vision/opencv_image_functions.h"
 
-float aggression = 0.8;
+float aggression = 0.75;
 uint16_t focal = 250; 																													//focal distance camera in pixels
 uint8_t screen_height = 245;
-float path_width = 0.7;
+float path_width = 1.;
 
 //Calculates the height of a pixel square
 uint16_t func_square_height(uint16_t pos)
 {
+	if (pos==0){pos=1;}
 	float theta = stateGetNedToBodyEulers_f()->theta;
 	//float altitude = stateGetPositionEnu_f()->z;
 	float altitude = 1.;
-	uint16_t square_height = sqrt(pow((float)focal,2.)+pow(((screen_height)/2.-pos),2.))/sqrt(pow(pix_to_m(pos),2.)+pow(altitude,2.))*path_width;
+	uint16_t square_height = sqrt(pow((float)focal,2.)+pow(((screen_height)/2.-pos),2.))/sqrt(pow(pix_to_m(pos)/aggression,2.)+pow(altitude,2.))*path_width;
 	return square_height;
 }
 
