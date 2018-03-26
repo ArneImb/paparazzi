@@ -58,6 +58,27 @@
 #define VISUAL_SONAR_TH 0.95
 #endif
 
+// Define flight plan status
+#ifndef STATUS_STANDBY
+#define STATUS_STANDBY 0
+#endif
+
+#ifndef STATUS_STABALIZING
+#define STATUS_STABALIZING 1
+#endif
+
+#ifndef STATUS_AT_GOAL
+#define STATUS_AT_GOAL 2
+#endif
+
+#ifndef STATUS_SET_HEADING
+#define STATUS_SET_HEADING 3
+#endif
+
+#ifndef STATUS_GO_GOAL
+#define STATUS_GO_GOAL 4
+#endif
+
 #include <inttypes.h>
 #include "math/pprz_geodetic_int.h"
 
@@ -70,6 +91,10 @@ extern uint8_t chooseRandomIncrementAvoidance(void);
 extern void nav_set_heading_towards_goal();
 extern void compute_dist2_to_goal(void);
 extern void check_goal_heading(float heading_diff_limit);
+extern void stop_obstacle();
+extern void compute_ground_speed();
+extern void check_at_goal();
+extern void look_around();
 // extern void visual_sonar_periodic();
 
 
@@ -92,6 +117,8 @@ extern uint8_t forward_heading;
 extern uint8_t set_heading;
 extern uint8_t stabalized;
 extern float dist2_goal;
+extern uint8_t status;
+extern float ground_speed;
 
 extern struct video_listener *listener;
 
