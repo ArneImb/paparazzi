@@ -60,8 +60,6 @@ uint8_t color_cr_min  = VISUAL_SONAR_MINCR;
 uint8_t color_cr_max  = VISUAL_SONAR_MAXCR;
 
 //Initialize other settings
-uint16_t square_height_min = VISUAL_SONAR_SQUARE_HEIGHT_MIN;
-uint16_t square_height_max = VISUAL_SONAR_SQUARE_HEIGHT_MAX;
 uint8_t square_width = VISUAL_SONAR_SQUARE_WIDTH;
 float square_th = VISUAL_SONAR_TH;
 

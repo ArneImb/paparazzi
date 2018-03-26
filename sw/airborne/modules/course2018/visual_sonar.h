@@ -50,14 +50,6 @@
 #define VISUAL_SONAR_MAXCR 138
 #endif
 
-#ifndef VISUAL_SONAR_SQUARE_HEIGHT_MAX
-#define VISUAL_SONAR_SQUARE_HEIGHT_MAX 150
-#endif
-
-#ifndef VISUAL_SONAR_SQUARE_HEIGHT_MIN
-#define VISUAL_SONAR_SQUARE_HEIGHT_MIN 50
-#endif
-
 #ifndef VISUAL_SONAR_SQUARE_WIDTH
 #define VISUAL_SONAR_SQUARE_WIDTH 5
 #endif
@@ -90,8 +82,6 @@ extern uint8_t color_cr_max;
 
 extern uint16_t pix_to_go;
 
-extern uint16_t square_height_min;
-extern uint16_t square_height_max;
 extern uint8_t square_width;
 extern float square_th;
 extern float m_to_go;

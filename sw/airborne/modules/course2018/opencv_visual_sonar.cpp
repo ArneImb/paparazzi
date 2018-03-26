@@ -20,13 +20,14 @@
 /**
  * @file "modules/course2018/visual_sonar.c"
  * @author Dennis van Wijngaarden
- * Object detection, range and avoidance algoritm using green floor in cyberzoo
+ * Object detection, range and avoidance algorithm using green floor in cyberzoo
  */
 
 #include "opencv_visual_sonar.h"
 #include "opencv_visual_sonar.hpp"
 #include "visual_sonar.h"
 #include "state.h"
+#include <math.h>
 
 using namespace std;
 #include <opencv2/core/core.hpp>
@@ -34,15 +35,18 @@ using namespace std;
 using namespace cv;
 #include "modules/computer_vision/opencv_image_functions.h"
 
-float aggression = 0.6;
+float aggression = 0.75;
 uint16_t focal = 250; 																													//focal distance camera in pixels
 uint8_t screen_height = 245;
+float path_width = 0.7;
 
-//Calculates the width of a pixel square
-uint16_t func_square_height(uint16_t pos, uint16_t square_height_min = square_height_min, uint16_t square_height_max = square_height_max)
+//Calculates the height of a pixel square
+uint16_t func_square_height(uint16_t pos)
 {
 	float theta = stateGetNedToBodyEulers_f()->theta;
-	uint16_t square_height = (float)square_height_max-((float)square_height_max-(float)square_height_min)/((float)screen_height/2.)*((float)pos+(float)focal*theta);
+	//float altitude = stateGetPositionEnu_f()->z;
+	float altitude = 1.;
+	uint16_t square_height = sqrt(pow((float)focal,2.)+pow(((screen_height)/2.-pos),2.))/sqrt(pow(pix_to_m(pos),2.)+pow(altitude,2.))*path_width;
 	return square_height;
 }
 
@@ -57,7 +61,7 @@ uint16_t number_positives_square(Mat integral_img, uint16_t left, uint16_t right
 }
 
 //Calculates the number of pixels up to an obstacle by stepping forward in a masked image with pixel blocks
-uint16_t pixels_to_go(Mat mask, uint8_t square_width = square_width, uint16_t square_height_min = square_height_min, uint16_t square_height_max = square_height_max, float threshold = square_th)
+uint16_t pixels_to_go(Mat mask, uint8_t square_width = square_width, float threshold = square_th)
 {
 	//Define masked image properties
 	int w = mask.size().width; 								//Width of mask in pixels
@@ -93,8 +97,10 @@ float pix_to_m(uint16_t pixels)
 	if (pixels>0)
 	{																											//Camera screen height in pixels
 		float theta = stateGetNedToBodyEulers_f()->theta; 																						//Pitch angle in radians
-		meters = ((float)focal+((float)screen_height/2.-(float)pixels)*theta)/((float)screen_height/2.-(float)pixels-(float)focal*theta); 		//Calculate distance																			//One meter of safety margin
-		if ((meters<0.) or (meters>5.)) meters = 5.; 																							//Capping the function output
+		//float altitude = stateGetPositionEnu_f()->z;
+		float altitude = 1.;
+		meters = ((float)focal*altitude+((float)screen_height/2.-(float)pixels)*theta*altitude)/((float)screen_height/2.-(float)pixels-(float)focal*theta); 		//Calculate distance																			//One meter of safety margin
+		if ((meters<0.) or (meters>7.)) meters = 7.; 																							//Capping the function output
 		meters *= aggression;																													//Setting controller aggression
 	}
 	return meters;
@@ -125,11 +131,13 @@ int opencv_YCbCr_filter(char *img, int width, int height)
 
 	//mask.copyTo(M);
 	bitwise_and(M_RGB,M_RGB,masked_RGB,mask); //in, in, out (cooy to inimg frame)
-	uint16_t square_height_bottom = func_square_height(0);
-	uint16_t square_height_top = func_square_height(pix_to_go);
 
-	line(masked_RGB, Point(0,(height+square_height_bottom)/2), Point(pix_to_go,(height+square_height_top)/2), Scalar(0,255,0),2);
-	line(masked_RGB, Point(0,(height-square_height_bottom)/2), Point(pix_to_go,(height-square_height_top)/2), Scalar(0,255,0),2);
+	uint16_t disp_pos;
+	for(disp_pos = 0; disp_pos<=pix_to_go; disp_pos += square_width)
+	{
+		uint16_t square_height = func_square_height(disp_pos);
+		line(masked_RGB, Point(disp_pos,(height-square_height)/2), Point(disp_pos,(height+square_height)/2), Scalar(255,0,0),1);
+	}
 
 	cvtColor(masked_RGB, M, CV_RGB2YUV);
 	//Convert back and save in original image position
