@@ -36,7 +36,7 @@ using namespace cv;
 #include "modules/computer_vision/opencv_image_functions.h"
 
 float aggression = 0.75;
-uint16_t focal = 250; 																													//focal distance camera in pixels
+uint16_t focal = 250; 											//focal distance camera in pixels
 uint8_t screen_height = 245;
 float path_width = 1.;
 
@@ -48,6 +48,7 @@ uint16_t func_square_height(uint16_t pos)
 	//float altitude = stateGetPositionEnu_f()->z;
 	float altitude = 1.;
 	uint16_t square_height = sqrt(pow((float)focal,2.)+pow(((screen_height)/2.-pos),2.))/sqrt(pow(pix_to_m(pos)/aggression,2.)+pow(altitude,2.))*path_width;
+	if (pos<30){square_height*=1.5;}
 	return square_height;
 }
 
@@ -59,6 +60,18 @@ uint16_t number_positives_square(Mat integral_img, uint16_t left, uint16_t right
 				  (integral_img.at<uint32_t>(top,right)+integral_img.at<uint32_t>(bottom,left));   //(y,x)
 
 	return n_positives;
+}
+
+//Decides to go left or right based on positive pixels
+uint8_t left_or_right(Mat integral_img, int width, int height)
+{
+	uint16_t positives_left;
+	uint16_t positives_right;
+	positives_left = integral_img.at<uint32_t>((int)((float)height/2.),width);
+	positives_right = integral_img.at<uint32_t>(height,width) - integral_img.at<uint32_t>((int)((float)height/2.),width);
+	if (positives_right>=positives_left){preferred_dir=GO_RIGHT;}
+	else {preferred_dir=GO_LEFT;}
+	return preferred_dir;
 }
 
 //Calculates the number of pixels up to an obstacle by stepping forward in a masked image with pixel blocks

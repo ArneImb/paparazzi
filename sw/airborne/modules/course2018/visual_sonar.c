@@ -80,6 +80,7 @@ uint8_t stabalized = false;
 float dist2_goal;
 uint8_t status;
 float ground_speed;
+uint8_t preferred_dir;
 
 // Function
 struct image_t *opencv_func(struct image_t *img);

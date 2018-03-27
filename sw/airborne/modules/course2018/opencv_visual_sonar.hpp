@@ -6,6 +6,7 @@ extern uint16_t func_square_height(uint16_t pos);
 extern uint16_t number_positives_square(Mat integral_img, uint16_t left, uint16_t right, uint16_t top, uint16_t bottom);
 extern uint16_t pixels_to_go(Mat mask, uint8_t square_width, float threshold);
 extern float pix_to_m(uint16_t pixels);
+extern uint8_t left_or_right(Mat integral_img, int width, int height);
 
 extern float aggression;
 extern uint16_t focal; 		//focal distance camera in pixels

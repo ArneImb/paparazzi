@@ -79,6 +79,14 @@
 #define STATUS_GO_GOAL 4
 #endif
 
+#ifndef GO_RIGHT
+#define GO_RIGHT 0
+#endif
+
+#ifndef GO_LEFT
+#define GO_LEFT 1
+#endif
+
 #include <inttypes.h>
 #include "math/pprz_geodetic_int.h"
 
@@ -119,6 +127,7 @@ extern uint8_t stabalized;
 extern float dist2_goal;
 extern uint8_t status;
 extern float ground_speed;
+extern uint8_t preferred_dir;
 
 extern struct video_listener *listener;
 
