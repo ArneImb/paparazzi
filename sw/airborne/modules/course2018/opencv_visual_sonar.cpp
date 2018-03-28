@@ -35,29 +35,27 @@ using namespace std;
 using namespace cv;
 #include "modules/computer_vision/opencv_image_functions.h"
 
-float aggression = 0.6;
-uint16_t focal = 250; 											//focal distance camera in pixels
+float aggression = 0.8;
 uint8_t screen_height = 245;
-float path_width = 1.;
+uint16_t min_square_height = 50;
+uint16_t max_square_height = 150;
+uint16_t pitch_to_pix = 100;
 
 //Calculates the height of a pixel square
 uint16_t func_square_height(uint16_t pos)
 {
 	if (pos==0){pos=1;}
 	float theta = stateGetNedToBodyEulers_f()->theta;
-	//float altitude = stateGetPositionEnu_f()->z;
-	float altitude = 1.;
-	uint16_t square_height = sqrt(pow((float)focal,2.)+pow(((screen_height)/2.-pos),2.))/sqrt(pow(pix_to_m(pos)/aggression,2.)+pow(altitude,2.))*path_width;
-	if (pos<30){square_height*=1.2;}
+	uint16_t square_height = (float)max_square_height-((float)max_square_height-(float)min_square_height)/((float)screen_height/2.)*((float)pos+(float)pitch_to_pix*theta);
 	return square_height;
 }
 
 // Calculates the number of accessible pixels in a square using the integral image of a masked image
-uint16_t number_positives_square(Mat integral_img, uint16_t left, uint16_t right, uint16_t top, uint16_t bottom)
+uint16_t number_positives_square(Mat integral_mask, uint16_t left, uint16_t right, uint16_t top, uint16_t bottom)
 {
 	uint16_t n_positives; 									//number of positive pixels in a square block
-	n_positives = (integral_img.at<uint32_t>(top,left)+integral_img.at<uint32_t>(bottom,right)) -
-				  (integral_img.at<uint32_t>(top,right)+integral_img.at<uint32_t>(bottom,left));   //(y,x)
+	n_positives = (integral_mask.at<uint32_t>(top,left)+integral_mask.at<uint32_t>(bottom,right)) -
+				  (integral_mask.at<uint32_t>(top,right)+integral_mask.at<uint32_t>(bottom,left));   //(y,x)
 
 	return n_positives;
 }
@@ -109,13 +107,10 @@ float pix_to_m(uint16_t pixels)
 {
 	float meters = 0.; //Initialize distance at zero, since the function is only valid for pixels>0
 	if (pixels>0)
-	{																											//Camera screen height in pixels
-		float theta = stateGetNedToBodyEulers_f()->theta; 																						//Pitch angle in radians
-		//float altitude = stateGetPositionEnu_f()->z;
-		float altitude = 1.;
-		meters = ((float)focal*altitude+((float)screen_height/2.-(float)pixels)*theta*altitude)/((float)screen_height/2.-(float)pixels-(float)focal*theta); 		//Calculate distance																			//One meter of safety margin
-		if ((meters<0.) or (meters>5.)) meters = 5.; 																							//Capping the function output
-		meters *= aggression;																													//Setting controller aggression
+	{
+		float theta = stateGetNedToBodyEulers_f()->theta;	//Pitch angle in radians
+		meters = 0.03328*(pixels+pitch_to_pix*theta)+2.12956;	//Calculate distance
+		meters *= aggression;
 	}
 	return meters;
 }
@@ -143,7 +138,6 @@ int opencv_YCbCr_filter(char *img, int width, int height)
 	pix_to_go = pixels_to_go(mask);
 	m_to_go = pix_to_m(pix_to_go);
 
-	//mask.copyTo(M);
 	bitwise_and(M_RGB,M_RGB,masked_RGB,mask); //in, in, out (cooy to inimg frame)
 
 	uint16_t disp_pos;

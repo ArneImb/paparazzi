@@ -9,5 +9,7 @@ extern float pix_to_m(uint16_t pixels);
 extern uint8_t left_or_right(Mat integral_img, int width, int height);
 
 extern float aggression;
-extern uint16_t focal; 		//focal distance camera in pixels
 extern uint8_t screen_height;
+extern uint16_t min_square_height;
+extern uint16_t max_square_height;
+extern uint16_t pitch_to_pix;

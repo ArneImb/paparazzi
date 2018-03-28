@@ -104,12 +104,12 @@
 
   <!-- Cyberzoo bebop1 values -->
   <section name="COLORFILTER" prefix="VISUAL_SONAR_">
-    <define name="MINY" value="70"/>
-    <define name="MAXY" value="117"/>
-    <define name="MINCB" value="111"/>
-    <define name="MAXCB" value="132"/>
-    <define name="MINCR" value="124"/>
-    <define name="MAXCR" value="138"/>
+    <define name="MINY" value="59"/>
+    <define name="MAXY" value="116"/>
+    <define name="MINCB" value="72"/>
+    <define name="MAXCB" value="96"/>
+    <define name="MINCR" value="111"/>
+    <define name="MAXCR" value="128"/>
   </section>
 
   <section name="AIR_DATA" prefix="AIR_DATA_">
