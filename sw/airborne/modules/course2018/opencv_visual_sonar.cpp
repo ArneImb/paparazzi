@@ -35,7 +35,7 @@ using namespace std;
 using namespace cv;
 #include "modules/computer_vision/opencv_image_functions.h"
 
-float aggression = 0.75;
+float aggression = 0.6;
 uint16_t focal = 250; 											//focal distance camera in pixels
 uint8_t screen_height = 245;
 float path_width = 1.;
@@ -48,7 +48,7 @@ uint16_t func_square_height(uint16_t pos)
 	//float altitude = stateGetPositionEnu_f()->z;
 	float altitude = 1.;
 	uint16_t square_height = sqrt(pow((float)focal,2.)+pow(((screen_height)/2.-pos),2.))/sqrt(pow(pix_to_m(pos)/aggression,2.)+pow(altitude,2.))*path_width;
-	if (pos<30){square_height*=1.5;}
+	if (pos<30){square_height*=1.2;}
 	return square_height;
 }
 
@@ -114,7 +114,7 @@ float pix_to_m(uint16_t pixels)
 		//float altitude = stateGetPositionEnu_f()->z;
 		float altitude = 1.;
 		meters = ((float)focal*altitude+((float)screen_height/2.-(float)pixels)*theta*altitude)/((float)screen_height/2.-(float)pixels-(float)focal*theta); 		//Calculate distance																			//One meter of safety margin
-		if ((meters<0.) or (meters>7.)) meters = 7.; 																							//Capping the function output
+		if ((meters<0.) or (meters>5.)) meters = 5.; 																							//Capping the function output
 		meters *= aggression;																													//Setting controller aggression
 	}
 	return meters;

@@ -117,6 +117,7 @@ void visual_sonar_periodic()
 		look_around();
 		break;
 	case STATUS_SET_HEADING :
+		compute_dist2_to_goal();
 		check_goal_heading(5);
 		break;
 	case STATUS_GO_GOAL :
@@ -268,7 +269,7 @@ uint8_t chooseRandomIncrementAvoidance()
   return false;
 }
 
-void nav_set_heading_towards_goal()
+void nav_set_heading_towards_goal(void)
 {
   struct FloatVect2 target = {WaypointX(WP_GOAL), WaypointY(WP_GOAL)};
   struct FloatVect2 pos_diff;
@@ -284,6 +285,9 @@ void compute_dist2_to_goal(void)
 
 void check_goal_heading(float heading_diff_limit)
 {
+	if(dist2_goal<0.3){
+			status = STATUS_AT_GOAL;
+		}
 
 	struct FloatVect2 target = {WaypointX(WP_GOAL), WaypointY(WP_GOAL)};
 	struct FloatVect2 pos_diff;
@@ -311,28 +315,29 @@ void check_goal_heading(float heading_diff_limit)
 	}
 }
 
-void stop_obstacle(){
-	if(pix_to_go <= 10){
-		moveWaypointForward(WP_GOAL, 0.5*ground_speed);
+void stop_obstacle(void){
+	if(pix_to_go <= 15){
+		moveWaypointForward(WP_GOAL, 0.3*ground_speed);
 		//moveWaypointForward(WP_ATGOAL, 0.25*ground_speed);
 		//waypoint_set_here_2d(WP_GOAL);
 		//waypoint_set_here_2d(WP_ATGOAL);
 		//status = STATUS_STABALIZING;
 		status = STATUS_AT_GOAL;
+		VERBOSE_PRINT("Stop!!");
 	}
 }
 
-void compute_ground_speed(){
+void compute_ground_speed(void){
 	ground_speed = sqrtf(powf(stateGetSpeedNed_f()->x,2)+powf(stateGetSpeedNed_f()->y,2));
 }
 
-void check_at_goal(){
+void check_at_goal(void){
 	if(dist2_goal<0.3 && ground_speed <0.15){
 		status = STATUS_AT_GOAL;
 	}
 }
 
-void look_around(){
+void look_around(void){
 	if(ground_speed < 0.15){
 		int r = rand()%10; //Change 1 out of 10 that r == 1
 
@@ -350,7 +355,7 @@ void look_around(){
 				safe_heading = false;
 				status = STATUS_SET_HEADING;
 			}
-			else{
+			else{compute_dist2_to_goal();
 				if(m_to_go > best_distance){
 					best_distance = m_to_go;
 					moveWaypointForward(WP_GOAL, best_distance);

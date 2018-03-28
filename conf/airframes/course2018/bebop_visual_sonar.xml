@@ -104,12 +104,12 @@
 
   <!-- Cyberzoo bebop1 values -->
   <section name="COLORFILTER" prefix="VISUAL_SONAR_">
-    <define name="MINY" value="73"/>
-    <define name="MAXY" value="110"/>
-    <define name="MINCB" value="80"/>
-    <define name="MAXCB" value="92"/>
-    <define name="MINCR" value="117"/>
-    <define name="MAXCR" value="125"/>
+    <define name="MINY" value="70"/>
+    <define name="MAXY" value="117"/>
+    <define name="MINCB" value="111"/>
+    <define name="MAXCB" value="132"/>
+    <define name="MINCR" value="124"/>
+    <define name="MAXCR" value="138"/>
   </section>
 
   <section name="AIR_DATA" prefix="AIR_DATA_">
@@ -226,7 +226,7 @@
   <section name="GUIDANCE_H" prefix="GUIDANCE_H_">
     <!-- Good weather -->
     <define name="MAX_BANK" value="20" unit="deg"/>
-    <define name="REF_MAX_SPEED" value="2" unit="m/s"/>
+    <define name="REF_MAX_SPEED" value="1" unit="m/s"/>
     <!-- Bad weather -->
     <!-- define name="MAX_BANK" value="32" unit="deg"/ -->
     <define name="PGAIN" value="120"/>
