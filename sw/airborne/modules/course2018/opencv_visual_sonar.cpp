@@ -37,9 +37,9 @@ using namespace cv;
 
 float aggression = 0.8;
 uint8_t screen_height = 245;
-uint16_t min_square_height = 50;
-uint16_t max_square_height = 150;
-uint16_t pitch_to_pix = 100;
+uint16_t min_square_height = 30;
+uint16_t max_square_height = 170;
+uint16_t pitch_to_pix = 125;
 
 //Calculates the height of a pixel square
 uint16_t func_square_height(uint16_t pos)
@@ -109,7 +109,7 @@ float pix_to_m(uint16_t pixels)
 	if (pixels>0)
 	{
 		float theta = stateGetNedToBodyEulers_f()->theta;	//Pitch angle in radians
-		meters = 0.03328*(pixels+pitch_to_pix*theta)+2.12956;	//Calculate distance
+		meters = 0.03328*((float)pixels+(float)pitch_to_pix*theta)+2.12956;	//Calculate distance
 		meters *= aggression;
 	}
 	return meters;
