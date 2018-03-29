@@ -81,6 +81,8 @@ float dist2_goal;
 uint8_t status;
 float ground_speed;
 uint8_t preferred_dir;
+uint8_t scan_direction;
+uint8_t confidence_level;
 
 // Function
 struct image_t *opencv_func(struct image_t *img);
@@ -98,11 +100,13 @@ struct image_t *opencv_func(struct image_t *img)
 void visual_sonar_init()
 {
 	listener = cv_add_to_device(&VISUAL_SONAR_CAMERA, opencv_func, VISUAL_SONAR_FPS); //Define camera in module xml
-	chooseRandomIncrementAvoidance();
+	choose_next_direction();
+	confidence_level = 0;
 	srand(time(NULL));
 	status = STATUS_STANDBY;
 }
 
+// Periodic navigation function that runs modules if the drone has a predefined navigation status defined in the visual_sonar.h file
 void visual_sonar_periodic()
 {
 	safeToGoForwards = m_to_go > 0.5;
@@ -112,11 +116,14 @@ void visual_sonar_periodic()
 		break;
 	case STATUS_STABALIZING :
 		break;
+	case STATUS_SET_SCAN_HEADING : // Selecting scan heading called once in flight plan
+		check_scan_heading(5);
+		break;
 	case STATUS_AT_GOAL :
 		compute_ground_speed();
 		look_around();
 		break;
-	case STATUS_SET_HEADING :
+	case STATUS_SET_HEADING : // Setting heading called once in flight plan
 		compute_dist2_to_goal();
 		check_goal_heading(5);
 		break;
@@ -126,74 +133,12 @@ void visual_sonar_periodic()
 		check_at_goal(); // Check if status should be changed to AT_GOAL
 		stop_obstacle(); //Check if it has to stop for obstacles
 		break;
+	case STATUS_STOP :
+		compute_dist2_to_goal(); //Update distance to goal variable
+		compute_ground_speed();
+		check_at_goal();
+		break;
 	}
-}
-
-void visual_sonar_periodic_test()
-{
-	// Check the amount of orange. If this is above a threshold
-	// you want to turn a certain amount of degrees
-	safeToGoForwards = m_to_go > 0.5;
-	//VERBOSE_PRINT("Pixel count threshold: %d safe: %d \n", color_count, tresholdColorCount, safeToGoForwards);
-	if(!at_goal && static_running){
-		compute_dist2_to_goal();
-		if(!safeToGoForwards){
-			waypoint_set_here_2d(WP_GOAL);
-			waypoint_set_here_2d(WP_ATGOAL);
-			//waypoint_set_here_2d(WP_GOAL);
-			at_goal = true;
-		}
-		if(dist2_goal<0.3 && (sqrtf(pow(stateGetSpeedNed_f()->x,2)+pow(stateGetSpeedNed_f()->y,2))) <0.15){
-			at_goal=true;
-		}
-	}
-	if(at_goal && stabalized &&!set_heading && (sqrtf(pow(stateGetSpeedNed_f()->x,2)+pow(stateGetSpeedNed_f()->y,2))) <0.15){
-		if(safeToGoForwards)
-		{
-			safe_heading = true;
-			int r = rand()%10;
-			if(r!=1){
-				if(m_to_go > best_distance){
-					best_distance = m_to_go;
-					moveWaypointForward(WP_GOAL, best_distance);
-				}
-				increase_nav_heading(&nav_heading, incrementForAvoidance);
-			}
-			else{
-				if(m_to_go >= best_distance){
-					best_distance = m_to_go;
-					moveWaypointForward(WP_GOAL, best_distance);
-				}
-				//nav_set_heading_towards_goal();
-				chooseRandomIncrementAvoidance();
-				best_distance = 0;
-				//set_heading = true;
-				at_goal = false;
-				safe_heading = false;
-				}
-			}
-		if(rand()%10 == 1 && safe_heading){
-			//nav_set_heading_towards_goal();
-			chooseRandomIncrementAvoidance();
-			best_distance = 0;
-			//set_heading = true;
-			at_goal = false;
-			safe_heading = false;
-		}
-		else
-		{
-			increase_nav_heading(&nav_heading, incrementForAvoidance);
-		}
-	}
-	if(at_goal && set_heading){
-		nav_set_heading_towards_goal();
-		check_goal_heading(5);
-		if(forward_heading){
-			set_heading = false;
-			at_goal = false;
-		}
-	}
-	return;
 }
 
 //Strategic navigation functions called in flightplan
@@ -254,40 +199,7 @@ uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters)
   return false;
 }
 
-
-uint8_t chooseRandomIncrementAvoidance()
-{
-  // Randomly choose CW or CCW avoiding direction
-int r = rand() % 5;
-if(r == 0){
-	int r = rand() % 2;
-	 	 if (r == 0) {
-	 		 incrementForAvoidance = 10.0;
-	      //VERBOSE_PRINT("Set avoidance increment to: %f\n", incrementForAvoidance);
-	    } else {
-	    	incrementForAvoidance = -10.0;
-	    }
-}
-else{
-	if(preferred_dir == GO_RIGHT){
-		incrementForAvoidance = 10.0;
-	}
-	if(preferred_dir == GO_LEFT){
-		incrementForAvoidance = -10.0;
-	}
-	else{
-		int r = rand() % 2;
-			if (r == 0) {
-				incrementForAvoidance = 10.0;
-			      //VERBOSE_PRINT("Set avoidance increment to: %f\n", incrementForAvoidance);
-			} else {
-				incrementForAvoidance = -10.0;
-			}
-		}
-	}
-return false;
-}
-
+// Function to point nose of drone towards the goal waypoint
 void nav_set_heading_towards_goal(void)
 {
   struct FloatVect2 target = {WaypointX(WP_GOAL), WaypointY(WP_GOAL)};
@@ -297,6 +209,7 @@ void nav_set_heading_towards_goal(void)
   nav_heading = ANGLE_BFP_OF_REAL(heading_f);
 }
 
+// Equation that computes the distance to the goal waypoint with respect to the position of the drone.
 void compute_dist2_to_goal(void)
 {
   dist2_goal =  sqrt(get_dist2_to_waypoint(WP_GOAL));
@@ -304,9 +217,9 @@ void compute_dist2_to_goal(void)
 
 void check_goal_heading(float heading_diff_limit)
 {
-	if(dist2_goal<0.3){
-			status = STATUS_AT_GOAL;
-		}
+	if(dist2_goal<0.3){          //Needed to overcome lock
+		status = STATUS_AT_GOAL;
+	}
 
 	struct FloatVect2 target = {WaypointX(WP_GOAL), WaypointY(WP_GOAL)};
 	struct FloatVect2 pos_diff;
@@ -341,14 +254,14 @@ void stop_obstacle(void){
 		//waypoint_set_here_2d(WP_GOAL);
 		//waypoint_set_here_2d(WP_ATGOAL);
 		//status = STATUS_STABALIZING;
-		status = STATUS_AT_GOAL;
+		status = STATUS_STOP;
 		VERBOSE_PRINT("Stop!! \n");
 	}
 	else{
 		if(m_to_go <= dist2_goal){
 			if(m_to_go > 1){
-				moveWaypointForward(WP_GOAL, m_to_go-1);
-				VERBOSE_PRINT("Replace goal %f meters forward in stead of %f meters forward \n", m_to_go-1, dist2_goal);
+				moveWaypointForward(WP_GOAL, m_to_go-0.5);
+				VERBOSE_PRINT("Replace goal %f meters forward in stead of %f meters forward \n", m_to_go-0.5, dist2_goal);
 			}
 			else{
 				moveWaypointForward(WP_GOAL, m_to_go);
@@ -364,7 +277,8 @@ void compute_ground_speed(void){
 
 void check_at_goal(void){
 	if(dist2_goal<0.3 && ground_speed <0.15){
-		status = STATUS_AT_GOAL;
+		choose_next_direction();
+		status = STATUS_SET_SCAN_HEADING;
 	}
 }
 
@@ -376,16 +290,21 @@ void look_around(void){
 			safe_heading = true;
 			VERBOSE_PRINT("pixels to go = %d \n", pix_to_go);
 			VERBOSE_PRINT("meters to go = %f \n", m_to_go);
-			if(r==1){
+			if(r==1 || confidence_level >= 1){
 				if(m_to_go >= best_distance){
 					best_distance = m_to_go;
 					moveWaypointForward(WP_GOAL, best_distance);
 				}
 				best_distance = 0;
 				safe_heading = false;
+				confidence_level = 0;
 				status = STATUS_SET_HEADING;
+				//choose_next_direction();
 			}
-			else{compute_dist2_to_goal();
+			else{
+				if(m_to_go > 3){
+					confidence_level = confidence_level + 1;
+				}
 				if(m_to_go > best_distance){
 					best_distance = m_to_go;
 					moveWaypointForward(WP_GOAL, best_distance);
@@ -398,11 +317,60 @@ void look_around(void){
 			if(r == 1 && safe_heading){
 				best_distance = 0;
 				safe_heading = false;
+				confidence_level = 0;
 				status = STATUS_SET_HEADING;
+				//choose_next_direction();
 			}
 			else{
 				increase_nav_heading(&nav_heading, incrementForAvoidance);
 			}
 		}
 	}
+}
+
+// Function that initialises next turning direction at goal waypoint
+void choose_next_direction(void){
+	int r = rand() % 2;
+	if(r==0){
+		scan_direction = GO_RIGHT;
+		incrementForAvoidance = 10.0;
+	} else{
+		scan_direction = GO_LEFT;
+		incrementForAvoidance = -10.0;
+	}
+}
+
+// Function to set the heading of the drone a offset of 90 to 180 deg when arriving at the goal
+void set_scan_heading(void){
+	int r = rand() % 91;
+	if(scan_direction == GO_RIGHT){
+		increase_nav_heading(&nav_heading, 90+r);
+		VERBOSE_PRINT("set heading RIGHT to %d \n", nav_heading);
+	} else {
+		increase_nav_heading(&nav_heading, -90-r);
+		VERBOSE_PRINT("set heading LEFT to %d \n", nav_heading);
+	}
+}
+
+void check_scan_heading(float hdg_diff_limit){
+	float heading_actual = DegOfRad(ANGLE_FLOAT_OF_BFP(stateGetNedToBodyEulers_i()->psi));
+
+	float heading_diff = DegOfRad(ANGLE_FLOAT_OF_BFP(nav_heading))-heading_actual;
+	VERBOSE_PRINT("hdg diff = %f \n", heading_diff);
+
+		if(heading_diff > 180){
+			heading_diff = -1*(heading_diff-360);
+		}
+
+		if(heading_diff < -180){
+			heading_diff = heading_diff+360;
+		}
+
+		if(heading_diff < 0){
+			heading_diff = heading_diff*-1;
+		}
+
+		if(heading_diff < hdg_diff_limit){
+			status = STATUS_AT_GOAL;
+		}
 }

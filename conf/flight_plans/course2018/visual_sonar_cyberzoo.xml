@@ -52,10 +52,10 @@
       !(nav_block >= IndexOfBlock('Land here')) &&
       (autopilot_in_flight() == true) )" deroute="Land here"/>
     <!-- Geofencing XY -->
-    <exception cond="(!InsideCyberZoo(GetPosX(), GetPosY()) &&
+    <!--  <exception cond="(!InsideCyberZoo(GetPosX(), GetPosY()) &&
       !(IndexOfBlock('Holding point') > nav_block) &&
       !(nav_block >= IndexOfBlock('Land here')) &&
-      (autopilot_in_flight() == true) )" deroute="Land here"/>
+      (autopilot_in_flight() == true) )" deroute="Land here"/> -->
     <!-- Geofencing Z 2.5 -->
     <exception cond="((GetPosAlt() > 3.5) &&
       !(IndexOfBlock('Holding point') > nav_block) &&
@@ -116,11 +116,15 @@
     </block>
     <block name="stabalizing">
       <stay until="stage_time>2" wp="ATGOAL"/>
-      <set var="status" value="STATUS_AT_GOAL"/>
-      <deroute block="AtGoal"/>
+      <set var="status" value="STATUS_SET_SCAN_HEADING"/>
+      <deroute block="SetScanHeading"/>
+    </block>
+    <block name="SetScanHeading">
+      <call_once fun="set_scan_heading()"/>
+      <exception cond="status==STATUS_AT_GOAL" deroute="AtGoal"/>
+      <stay wp= "GOAL"/>
     </block>
     <block name="AtGoal">
-      <call_once fun="chooseRandomIncrementAvoidance()"/>
       <call_once fun="NavCopyWaypoint(WP_ATGOAL,WP_GOAL)"/>
       <exception cond="status==STATUS_SET_HEADING" deroute="SetHeading"/>
       <stay wp="ATGOAL"/>
@@ -137,14 +141,18 @@
       <!--  <deroute block="GoGoal"/> -->
     </block>
     <block name="GoGoal">
-      <exception cond="status==STATUS_STABALIZING" deroute="stabalizing"/>
-      <exception cond="status==STATUS_AT_GOAL" deroute="AtGoal"/>
+      <exception cond="status==STATUS_SET_SCAN_HEADING" deroute="SetScanHeading"/>
+      <exception cond="status==STATUS_STOP" deroute="Stop"/>
       <!--  <call_once fun="nav_set_heading_towards_waypoint(WP_GOAL)"/> -->
       <stay wp="GOAL"/>
       <!--  <go from="ATGOAL" wp="GOAL" hmode="route"  approaching_time="0"/>
       <set var="at_goal" value="true"/>
       <deroute block="AtGoal"/>
       <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="PrepareObstacleRun"/> -->
+    </block>
+    <block name="Stop">
+      <exception cond="status==STATUS_SET_SCAN_HEADING" deroute="SetScanHeading"/>
+      <stay wp="GOAL"/>
     </block>
     <block name="PrepareObstacleRun">
       <while cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))">

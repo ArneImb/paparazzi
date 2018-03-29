@@ -67,16 +67,24 @@
 #define STATUS_STABALIZING 1
 #endif
 
+#ifndef STATUS_SET_SCAN_HEADING
+#define STATUS_SET_SCAN_HEADING 2
+#endif
+
 #ifndef STATUS_AT_GOAL
-#define STATUS_AT_GOAL 2
+#define STATUS_AT_GOAL 3
 #endif
 
 #ifndef STATUS_SET_HEADING
-#define STATUS_SET_HEADING 3
+#define STATUS_SET_HEADING 4
 #endif
 
 #ifndef STATUS_GO_GOAL
-#define STATUS_GO_GOAL 4
+#define STATUS_GO_GOAL 5
+#endif
+
+#ifndef STATUS_STOP
+#define STATUS_STOP 6
 #endif
 
 #ifndef GO_RIGHT
@@ -99,7 +107,6 @@ extern void visual_sonar_periodic(void);
 extern uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters);
 extern uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
 extern uint8_t increase_nav_heading(int32_t *heading, float incrementDegrees);
-extern uint8_t chooseRandomIncrementAvoidance(void);
 extern void nav_set_heading_towards_goal(void);
 extern void compute_dist2_to_goal(void);
 extern void check_goal_heading(float heading_diff_limit);
@@ -107,6 +114,9 @@ extern void stop_obstacle(void);
 extern void compute_ground_speed(void);
 extern void check_at_goal(void);
 extern void look_around(void);
+extern void choose_next_direction(void);
+extern void set_scan_heading(void);
+extern void check_scan_heading(float hdg_diff_limit);
 // extern void visual_sonar_periodic();
 
 
@@ -131,7 +141,9 @@ extern uint8_t stabalized;
 extern float dist2_goal;
 extern uint8_t status;
 extern float ground_speed;
+extern uint8_t scan_direction;
 extern uint8_t preferred_dir;
+extern uint8_t confidence_level;
 
 extern struct video_listener *listener;
 
