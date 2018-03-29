@@ -73,12 +73,12 @@ uint16_t pixels_to_go(Mat mask, uint8_t square_width = square_width, float thres
 	integral(bin_mask,integral_mask); 						//Define integral image of mask
 
 	//Decides to go left or right based on positive pixels
-	uint16_t positives_left;
-	uint16_t positives_right;
-	positives_left = integral_mask.at<uint32_t>((int)((float)height/2.),width);
-	positives_right = integral_mask.at<uint32_t>(h,w) - integral_mask.at<uint32_t>((int)((float)h/2.),w);
-	if (positives_right>=positives_left){preferred_dir=GO_RIGHT;}
-	else {preferred_dir=GO_LEFT;}
+	//uint16_t positives_left;
+	//uint16_t positives_right;
+	//positives_left = integral_mask.at<uint32_t>((int)((float)h/2.),w);
+	//positives_right = integral_mask.at<uint32_t>(h,w) - integral_mask.at<uint32_t>((int)((float)h/2.),w);
+	//if (positives_right>=positives_left){preferred_dir=GO_RIGHT;}
+	//else {preferred_dir=GO_LEFT;}
 
 	//Step forward and check if the number of accessible pixels stays above a certain threshold
 	for(left_pos = 0; left_pos<=w+square_width; left_pos += square_width)

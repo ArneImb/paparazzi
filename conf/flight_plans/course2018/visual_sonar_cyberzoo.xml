@@ -158,8 +158,8 @@
       <deroute block="START"/>
     </block>
     <block key="l" name="Land here" strip_button="Land Here" strip_icon="land-right.png">
-      <set var="static_running" value="false"/>
       <call_once fun="NavSetWaypointHere(WP_TD)"/>
+      <set var="status" value="STATUS_STANDBY"/>
       <go wp="TD"/>
       <deroute block="Flare"/>
     </block>
