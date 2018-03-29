@@ -77,10 +77,13 @@ uint16_t pixels_to_go(Mat mask, uint8_t square_width = square_width, float thres
 	uint16_t positives_right;
 	positives_left = number_positives_square(integral_mask, 0, w-1, 0, h/2);
 	positives_right = number_positives_square(integral_mask, 0, w-1, h/2, h-1);
-	//positives_left = integral_mask.at<uint32_t>((int)((float)h/2.),w);
-	//positives_right = integral_mask.at<uint32_t>(h,w) - integral_mask.at<uint32_t>((int)((float)h/2.),w);
-	if (positives_right>=positives_left){preferred_dir=GO_RIGHT;}
+
+	if(positives_left+positives_right< 15000){
+		preferred_dir=GO_RANDOM;
+	}
+	else{ if (positives_right>=positives_left){preferred_dir=GO_RIGHT;}
 	else {preferred_dir=GO_LEFT;}
+	}
 
 	//Step forward and check if the number of accessible pixels stays above a certain threshold
 	for(left_pos = 0; left_pos<=w+square_width; left_pos += square_width)

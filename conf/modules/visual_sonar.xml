@@ -35,7 +35,7 @@
     <file name="visual_sonar.h"/>
   </header>
   <init fun="visual_sonar_init()"/>
-  <periodic fun="visual_sonar_periodic()" freq="4"/>
+  <periodic fun="visual_sonar_periodic()" freq="8"/>
   <makefile target="ap">
     <file name="visual_sonar.c"/>
     <file name="opencv_visual_sonar.cpp"/>

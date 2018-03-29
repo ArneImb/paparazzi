@@ -87,6 +87,10 @@
 #define GO_LEFT 1
 #endif
 
+#ifndef GO_RANDOM
+#define GO_RANDOM 2
+#endif
+
 #include <inttypes.h>
 #include "math/pprz_geodetic_int.h"
 

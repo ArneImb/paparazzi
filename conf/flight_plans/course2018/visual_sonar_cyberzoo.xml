@@ -120,6 +120,7 @@
       <deroute block="AtGoal"/>
     </block>
     <block name="AtGoal">
+      <call_once fun="chooseRandomIncrementAvoidance()"/>
       <call_once fun="NavCopyWaypoint(WP_ATGOAL,WP_GOAL)"/>
       <exception cond="status==STATUS_SET_HEADING" deroute="SetHeading"/>
       <stay wp="ATGOAL"/>

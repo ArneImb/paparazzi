@@ -258,7 +258,8 @@ uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters)
 uint8_t chooseRandomIncrementAvoidance()
 {
   // Randomly choose CW or CCW avoiding direction
-
+int r = rand() % 5;
+if(r == 0){
 	int r = rand() % 2;
 	 	 if (r == 0) {
 	 		 incrementForAvoidance = 10.0;
@@ -266,9 +267,25 @@ uint8_t chooseRandomIncrementAvoidance()
 	    } else {
 	    	incrementForAvoidance = -10.0;
 	    }
-	      //VERBOSE_PRINT("Set avoidance increment to: %f\n", incrementForAvoidance);
-
-  return false;
+}
+else{
+	if(preferred_dir == GO_RIGHT){
+		incrementForAvoidance = 10.0;
+	}
+	if(preferred_dir == GO_LEFT){
+		incrementForAvoidance = -10.0;
+	}
+	else{
+		int r = rand() % 2;
+			if (r == 0) {
+				incrementForAvoidance = 10.0;
+			      //VERBOSE_PRINT("Set avoidance increment to: %f\n", incrementForAvoidance);
+			} else {
+				incrementForAvoidance = -10.0;
+			}
+		}
+	}
+return false;
 }
 
 void nav_set_heading_towards_goal(void)
@@ -329,8 +346,14 @@ void stop_obstacle(void){
 	}
 	else{
 		if(m_to_go <= dist2_goal){
-			moveWaypointForward(WP_GOAL, m_to_go-1);
-			VERBOSE_PRINT("Replace goal %f meters forward in stead of %f meters forward \n", m_to_go-1, dist2_goal);
+			if(m_to_go > 1){
+				moveWaypointForward(WP_GOAL, m_to_go-1);
+				VERBOSE_PRINT("Replace goal %f meters forward in stead of %f meters forward \n", m_to_go-1, dist2_goal);
+			}
+			else{
+				moveWaypointForward(WP_GOAL, m_to_go);
+				VERBOSE_PRINT("Replace goal %f meters forward in stead of %f meters forward \n", m_to_go, dist2_goal);
+			}
 		}
 	}
 }
@@ -358,7 +381,6 @@ void look_around(void){
 					best_distance = m_to_go;
 					moveWaypointForward(WP_GOAL, best_distance);
 				}
-				chooseRandomIncrementAvoidance();
 				best_distance = 0;
 				safe_heading = false;
 				status = STATUS_SET_HEADING;
@@ -374,7 +396,6 @@ void look_around(void){
 
 		else{
 			if(r == 1 && safe_heading){
-				chooseRandomIncrementAvoidance();
 				best_distance = 0;
 				safe_heading = false;
 				status = STATUS_SET_HEADING;
