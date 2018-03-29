@@ -280,7 +280,7 @@ void nav_set_heading_towards_goal(void)
 
 void compute_dist2_to_goal(void)
 {
-  dist2_goal =  get_dist2_to_waypoint(WP_GOAL);
+  dist2_goal =  sqrt(get_dist2_to_waypoint(WP_GOAL));
 }
 
 void check_goal_heading(float heading_diff_limit)
@@ -317,13 +317,19 @@ void check_goal_heading(float heading_diff_limit)
 
 void stop_obstacle(void){
 	if(pix_to_go <= 15){
-		moveWaypointForward(WP_GOAL, 0.3*ground_speed);
+		moveWaypointForward(WP_GOAL, 0.5*ground_speed);
 		//moveWaypointForward(WP_ATGOAL, 0.25*ground_speed);
 		//waypoint_set_here_2d(WP_GOAL);
 		//waypoint_set_here_2d(WP_ATGOAL);
 		//status = STATUS_STABALIZING;
 		status = STATUS_AT_GOAL;
-		VERBOSE_PRINT("Stop!!");
+		VERBOSE_PRINT("Stop!! \n");
+	}
+	else{
+		if(m_to_go <= dist2_goal){
+			moveWaypointForward(WP_GOAL, m_to_go);
+			VERBOSE_PRINT("Replace goal %f meters forward in stead of %f meters forward \n", m_to_go, dist2_goal);
+		}
 	}
 }
 
@@ -339,7 +345,7 @@ void check_at_goal(void){
 
 void look_around(void){
 	if(ground_speed < 0.15){
-		int r = rand()%10; //Change 1 out of 10 that r == 1
+		int r = rand()%5; //Change 1 out of 5 that r == 1
 
 		if(safeToGoForwards){
 			safe_heading = true;
