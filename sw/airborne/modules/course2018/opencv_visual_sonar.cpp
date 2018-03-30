@@ -35,9 +35,9 @@ using namespace std;
 using namespace cv;
 #include "modules/computer_vision/opencv_image_functions.h"
 
-float aggression = 0.8;
+float aggression = 0.75;
 uint8_t screen_height = 240;
-uint16_t min_square_height = 50;
+uint16_t min_square_height = 45;
 uint16_t max_square_height = 170;
 uint16_t pitch_to_pix = 125;
 
