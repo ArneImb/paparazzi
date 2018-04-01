@@ -40,6 +40,9 @@ uint8_t screen_height = 240;																					//Height of the screen in pixel
 uint16_t min_square_height = 45;																				//Square height at screen horizon
 uint16_t max_square_height = 170;																				//Square height at bottom of the screen
 uint16_t pitch_to_pix = 125;																					//Effect of pitch on screen pixel rotation
+uint16_t n_positives; 																							//Number of positive pixels in a square block
+uint16_t left_pos; 																								//Left position of pixel block
+uint16_t disp_pos;																								//Screen position in pixels
 
 //Calculates the height of a pixel square
 uint16_t func_square_height(uint16_t pos)
@@ -54,7 +57,6 @@ uint16_t func_square_height(uint16_t pos)
 // Calculates the number of accessible pixels in a square using the integral image of a masked image
 uint16_t number_positives_square(Mat integral_mask, uint16_t left, uint16_t right, uint16_t top, uint16_t bottom)
 {
-	uint16_t n_positives; 																						//Number of positive pixels in a square block
 	n_positives = (integral_mask.at<uint32_t>(top,left)+integral_mask.at<uint32_t>(bottom,right)) -
 				  (integral_mask.at<uint32_t>(top,right)+integral_mask.at<uint32_t>(bottom,left));   			//Select block from integral image
 
@@ -67,7 +69,6 @@ uint16_t pixels_to_go(Mat mask, uint8_t square_width = square_width, float thres
 	//Define masked image properties
 	int w = mask.size().width; 																					//Width of mask in pixels
 	int h = mask.size().height; 																				//Height of mask in pixels
-	uint16_t left_pos; 																							//Left position of pixel block
 	Mat bin_mask;																								//Define binary mask
 	Mat integral_mask; 																							//Define integral image of mask
 	cv::threshold(mask, bin_mask, 127, 1, THRESH_BINARY); 														//Set threshold of mask
@@ -128,7 +129,6 @@ int opencv_YCbCr_filter(char *img, int width, int height)
 	bitwise_and(M_RGB,M_RGB,masked_RGB,mask);																	//Copy to inimg frame (In, in, out)
 
 	//Draw vision range on screen
-	uint16_t disp_pos;																							//Screen position in pixels
 	for(disp_pos = 0; disp_pos<=pix_to_go; disp_pos += square_width)											//Loop to maximum pixel distance
 	{
 		uint16_t square_height = func_square_height(disp_pos);													//Calculate square height
@@ -141,4 +141,3 @@ int opencv_YCbCr_filter(char *img, int width, int height)
 
 	return 0;
 }
-
