@@ -1,6 +1,6 @@
 <!DOCTYPE flight_plan SYSTEM "../flight_plan.dtd">
 
-<flight_plan alt="1.0" ground_alt="0" lat0="51.9906361" lon0="4.3767874" max_dist_from_home="8" name="Bebop avoid orange TU Delft Cyberzoo" security_height="0.4">
+<flight_plan alt="1.0" ground_alt="0" lat0="51.9906361" lon0="4.3767874" max_dist_from_home="8" name="Bebop visual sonar TU Delft Cyberzoo" security_height="0.4">
   <header>
     #include "subsystems/datalink/datalink.h"
     #include "subsystems/electrical.h"
@@ -90,7 +90,7 @@
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
     </block>
     <block key="r" name="Start Engine">
-      <set var="static_running" value="false"/>
+      <set var="status" value="STATUS_STANDBY"/>
       <call_once fun="NavResurrect()"/>
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
       <call_once fun="NavResurrect()"/>

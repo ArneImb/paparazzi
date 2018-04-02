@@ -70,19 +70,16 @@ float m_to_go;
 // navigation settings
 float incrementForAvoidance;
 uint8_t safeToGoForwards = false;
-uint8_t at_goal = false;
 float best_distance = 0;
-uint8_t static_running = false;
 uint8_t safe_heading = false;
 uint8_t forward_heading = false;
 uint8_t set_heading = false;
-uint8_t stabalized = false;
 float dist2_goal;
 uint8_t status;
 float ground_speed;
-uint8_t preferred_dir;
 uint8_t scan_direction;
 uint8_t confidence_level;
+
 
 // Function
 struct image_t *opencv_func(struct image_t *img);
@@ -96,7 +93,7 @@ struct image_t *opencv_func(struct image_t *img)
 }
 
 
-// define all navigation functions below
+// initialisation of the opencv function and navigation parameters
 void visual_sonar_init()
 {
 	listener = cv_add_to_device(&VISUAL_SONAR_CAMERA, opencv_func, VISUAL_SONAR_FPS); //Define camera in module xml
@@ -116,32 +113,34 @@ void visual_sonar_periodic()
 		break;
 	case STATUS_STABALIZING :
 		break;
-	case STATUS_SET_SCAN_HEADING : // Selecting scan heading called once in flight plan
-		check_scan_heading(5);
+	case STATUS_SET_SCAN_HEADING : // Selecting scan heading called once in flight plan.
+		check_scan_heading(5); // check if heading is at the scan heading before changing status.
 		break;
 	case STATUS_AT_GOAL :
-		compute_ground_speed();
-		look_around();
+		compute_ground_speed(); // Update ground speed
+		look_around(); // Look around and set goal in furthest direction.
 		break;
 	case STATUS_SET_HEADING : // Setting heading called once in flight plan
-		compute_dist2_to_goal();
-		check_goal_heading(5);
+		compute_dist2_to_goal(); // Calculate distance to goal needed (for small distances, the function is prevented from getting locked)
+		check_goal_heading(5); // Check if the heading is set to goal before changing dtatus to goal
 		break;
 	case STATUS_GO_GOAL :
 		compute_dist2_to_goal(); //Update distance to goal variable
-		compute_ground_speed();
+		compute_ground_speed(); // Update ground speed
 		check_at_goal(); // Check if status should be changed to AT_GOAL
 		stop_obstacle(); //Check if it has to stop for obstacles
 		break;
 	case STATUS_STOP :
 		compute_dist2_to_goal(); //Update distance to goal variable
-		compute_ground_speed();
-		check_at_goal();
+		compute_ground_speed(); // Update ground speed (Used to overcome overshoot)
+		check_at_goal(); // Check if the drone is at the goal before changing status
+		break;
+	default :
 		break;
 	}
 }
 
-//Strategic navigation functions called in flightplan
+//Strategic navigation functions called in flightplan and periodic function
 
 
 /*
@@ -215,21 +214,24 @@ void compute_dist2_to_goal(void)
   dist2_goal =  sqrt(get_dist2_to_waypoint(WP_GOAL));
 }
 
+// Check if the heading is set to the goal heading before going to goal.
 void check_goal_heading(float heading_diff_limit)
 {
 	if(dist2_goal<0.3){          //Needed to overcome lock
 		status = STATUS_AT_GOAL;
 	}
 
-	struct FloatVect2 target = {WaypointX(WP_GOAL), WaypointY(WP_GOAL)};
-	struct FloatVect2 pos_diff;
-	VECT2_DIFF(pos_diff, target, *stateGetPositionEnu_f());
-	float heading_f = DegOfRad(atan2f(pos_diff.x, pos_diff.y));
-	float heading_actual = DegOfRad(ANGLE_FLOAT_OF_BFP(stateGetNedToBodyEulers_i()->psi));
+	struct FloatVect2 target = {WaypointX(WP_GOAL), WaypointY(WP_GOAL)}; // Convert goal x and y into 2D vector
+	struct FloatVect2 pos_diff; // Initialize position difference vector
+	VECT2_DIFF(pos_diff, target, *stateGetPositionEnu_f()); // Calculate relative position difference of goal in ENU reference frame.
+	float heading_f = DegOfRad(atan2f(pos_diff.x, pos_diff.y)); // Convert goal heading to degrees
+	float heading_actual = DegOfRad(ANGLE_FLOAT_OF_BFP(stateGetNedToBodyEulers_i()->psi)); // Convert actual heading to degrees
 
-	float heading_diff = heading_f-heading_actual;
+	float heading_diff = heading_f-heading_actual; // Calculate heading differecnce
 	VERBOSE_PRINT("hdg diff = %f \n", heading_diff);
 
+
+	//Normalize heading to compensate circular values
 	if(heading_diff > 180){
 		heading_diff = -1*(heading_diff-360);
 	}
@@ -247,13 +249,10 @@ void check_goal_heading(float heading_diff_limit)
 	}
 }
 
+// Check if the drone has to stop for an obstacle or has to adjust it's forward position of the obstacle.
 void stop_obstacle(void){
 	if(pix_to_go <= 0){
 		moveWaypointForward(WP_GOAL, 0.5*ground_speed);
-		//moveWaypointForward(WP_ATGOAL, 0.25*ground_speed);
-		//waypoint_set_here_2d(WP_GOAL);
-		//waypoint_set_here_2d(WP_ATGOAL);
-		//status = STATUS_STABALIZING;
 		status = STATUS_STOP;
 		VERBOSE_PRINT("Stop!! \n");
 	}
@@ -271,10 +270,13 @@ void stop_obstacle(void){
 	}
 }
 
+// Function to compute the ground speed based on the NED reference system
 void compute_ground_speed(void){
 	ground_speed = sqrtf(powf(stateGetSpeedNed_f()->x,2)+powf(stateGetSpeedNed_f()->y,2));
 }
 
+
+// Check if the drone is at the goal by checking speed and relative distance. Then the new scan heading is set.
 void check_at_goal(void){
 	if(dist2_goal<0.3 && ground_speed <0.15){
 		choose_next_direction();
@@ -282,9 +284,10 @@ void check_at_goal(void){
 	}
 }
 
+// Function to look around for free flight paths and set the goal to the furthest one.
 void look_around(void){
 	if(ground_speed < 0.15){
-		int r = rand()%5; //Change 1 out of 5 that r == 1
+		int r = rand()%10; //Change 1 out of 10 that r == 1
 
 		if(safeToGoForwards){
 			safe_heading = true;
@@ -295,11 +298,7 @@ void look_around(void){
 					best_distance = m_to_go;
 					moveWaypointForward(WP_GOAL, best_distance);
 				}
-				best_distance = 0;
-				safe_heading = false;
-				confidence_level = 0;
-				status = STATUS_SET_HEADING;
-				//choose_next_direction();
+				set_goal();
 			}
 			else{
 				if(m_to_go > 3){
@@ -315,17 +314,21 @@ void look_around(void){
 
 		else{
 			if(r == 1 && safe_heading){
-				best_distance = 0;
-				safe_heading = false;
-				confidence_level = 0;
-				status = STATUS_SET_HEADING;
-				//choose_next_direction();
+				set_goal();
 			}
 			else{
 				increase_nav_heading(&nav_heading, incrementForAvoidance);
 			}
 		}
 	}
+}
+
+// Function to initialize all variables before setting the goal
+void set_goal(void){
+	best_distance = 0;
+	safe_heading = false;
+	confidence_level = 0;
+	status = STATUS_SET_HEADING;
 }
 
 // Function that initialises next turning direction at goal waypoint
@@ -340,18 +343,19 @@ void choose_next_direction(void){
 	}
 }
 
-// Function to set the heading of the drone a offset of 90 to 180 deg when arriving at the goal
+// Function to set the heading of the drone a offset of 45 to 180 deg when arriving at the goal
 void set_scan_heading(void){
-	int r = rand() % 91;
+	int r = rand() % 136;
 	if(scan_direction == GO_RIGHT){
-		increase_nav_heading(&nav_heading, 90+r);
+		increase_nav_heading(&nav_heading, 45+r);
 		VERBOSE_PRINT("set heading RIGHT to %d \n", nav_heading);
 	} else {
-		increase_nav_heading(&nav_heading, -90-r);
+		increase_nav_heading(&nav_heading, -45-r);
 		VERBOSE_PRINT("set heading LEFT to %d \n", nav_heading);
 	}
 }
 
+// Check if the heading is set to the scan heading before scanning around.
 void check_scan_heading(float hdg_diff_limit){
 	float heading_actual = DegOfRad(ANGLE_FLOAT_OF_BFP(stateGetNedToBodyEulers_i()->psi));
 

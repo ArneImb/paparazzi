@@ -58,7 +58,6 @@
 #define VISUAL_SONAR_TH 0.95
 #endif
 
-// Define flight plan status
 #ifndef STATUS_STANDBY
 #define STATUS_STANDBY 0
 #endif
@@ -117,8 +116,7 @@ extern void look_around(void);
 extern void choose_next_direction(void);
 extern void set_scan_heading(void);
 extern void check_scan_heading(float hdg_diff_limit);
-// extern void visual_sonar_periodic();
-
+extern void set_goal(void);
 
 extern uint8_t color_lum_min;
 extern uint8_t color_lum_max;
@@ -132,17 +130,13 @@ extern uint16_t pix_to_go;
 extern uint8_t square_width;
 extern float square_th;
 extern float m_to_go;
-extern uint8_t at_goal;
 extern float best_distance;
-extern uint8_t static_running;
 extern uint8_t forward_heading;
 extern uint8_t set_heading;
-extern uint8_t stabalized;
 extern float dist2_goal;
 extern uint8_t status;
 extern float ground_speed;
 extern uint8_t scan_direction;
-extern uint8_t preferred_dir;
 extern uint8_t confidence_level;
 
 extern struct video_listener *listener;
