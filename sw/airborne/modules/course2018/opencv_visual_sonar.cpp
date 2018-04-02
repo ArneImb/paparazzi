@@ -37,9 +37,9 @@ using namespace cv;
 
 float aggression = 0.75;																						//Aggression factor
 uint8_t screen_height = 240;																					//Height of the screen in pixels
-uint16_t min_square_height = 45;																				//Square height at screen horizon
-uint16_t max_square_height = 170;																				//Square height at bottom of the screen
-uint16_t pitch_to_pix = 125;																					//Effect of pitch on screen pixel rotation
+// uint16_t min_square_height = 45;																				//Square height at screen horizon
+// uint16_t max_square_height = 170;																				//Square height at bottom of the screen
+// uint16_t pitch_to_pix = 125;																					//Effect of pitch on screen pixel rotation
 uint16_t n_positives; 																							//Number of positive pixels in a square block
 uint16_t left_pos; 																								//Left position of pixel block
 uint16_t disp_pos;																								//Screen position in pixels

@@ -98,6 +98,18 @@
 #define GO_RANDOM 2
 #endif
 
+#ifndef PITCH_TO_PIX
+#define PITCH_TO_PIX 125
+#endif
+
+#ifndef VISUAL_SONAR_MAX_HEIGHT
+#define VISUAL_SONAR_MAX_HEIGHT 170
+#endif
+
+#ifndef VISUAL_SONAR_MIN_HEIGHT
+#define VISUAL_SONAR_MIN_HEIGHT 45
+#endif
+
 #include <inttypes.h>
 #include "math/pprz_geodetic_int.h"
 
@@ -127,6 +139,12 @@ extern uint8_t color_cr_max;
 
 extern uint16_t pix_to_go;
 
+extern uint16_t pitch_to_pix;
+extern uint16_t basic_min_square_height;
+extern uint16_t basic_max_square_height;
+extern uint16_t min_square_height;
+extern uint16_t max_square_height;
+
 extern uint8_t square_width;
 extern float square_th;
 extern float m_to_go;
@@ -138,6 +156,8 @@ extern uint8_t status;
 extern float ground_speed;
 extern uint8_t scan_direction;
 extern uint8_t confidence_level;
+extern uint8_t first_look_around_loop;
+extern float square_height_factor;
 
 extern struct video_listener *listener;
 

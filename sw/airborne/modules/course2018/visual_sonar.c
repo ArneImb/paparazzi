@@ -67,6 +67,13 @@ float square_th = VISUAL_SONAR_TH;
 uint16_t pix_to_go;
 float m_to_go;
 
+// Variables used by opencv cpp file
+uint16_t pitch_to_pix = PITCH_TO_PIX;									//Effect of pitch on screen pixel rotation
+uint16_t basic_min_square_height = VISUAL_SONAR_MIN_HEIGHT;
+uint16_t basic_max_square_height = VISUAL_SONAR_MAX_HEIGHT;
+uint16_t min_square_height = VISUAL_SONAR_MIN_HEIGHT;					//Square height at screen horizon
+uint16_t max_square_height = VISUAL_SONAR_MAX_HEIGHT;					//Square height at bottom of the screen
+
 // navigation settings
 float incrementForAvoidance;
 uint8_t safeToGoForwards = false;
@@ -79,6 +86,8 @@ uint8_t status;
 float ground_speed;
 uint8_t scan_direction;
 uint8_t confidence_level;
+uint8_t first_look_around_loop = true;
+float square_height_factor = 1.;
 
 
 // Function
@@ -286,6 +295,11 @@ void check_at_goal(void){
 
 // Function to look around for free flight paths and set the goal to the furthest one.
 void look_around(void){
+	if(first_look_around_loop){
+		min_square_height = basic_min_square_height * square_height_factor;
+		max_square_height = basic_max_square_height * square_height_factor;
+		first_look_around_loop = false;
+	}
 	if(ground_speed < 0.15){
 		int r = rand()%10; //Change 1 out of 10 that r == 1
 
@@ -328,6 +342,9 @@ void set_goal(void){
 	best_distance = 0;
 	safe_heading = false;
 	confidence_level = 0;
+	first_look_around_loop = true;
+	min_square_height = basic_min_square_height;
+	max_square_height = basic_max_square_height;
 	status = STATUS_SET_HEADING;
 }
 
