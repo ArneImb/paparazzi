@@ -87,7 +87,9 @@ float ground_speed;
 uint8_t scan_direction;
 uint8_t confidence_level;
 uint8_t first_look_around_loop = true;
-float square_height_factor = 1.;
+float square_height_factor = 1.15;
+float safety_m_to_go = 0.;
+uint8_t go_goal_chance = 1;
 
 
 // Function
@@ -120,7 +122,7 @@ void visual_sonar_periodic()
 	switch(status){
 	case STATUS_STANDBY :
 		break;
-	case STATUS_STABALIZING :
+	case STATUS_STABALIZING : // Changed in flight plan
 		break;
 	case STATUS_SET_SCAN_HEADING : // Selecting scan heading called once in flight plan.
 		check_scan_heading(5); // check if heading is at the scan heading before changing status.
@@ -266,7 +268,7 @@ void stop_obstacle(void){
 		VERBOSE_PRINT("Stop!! \n");
 	}
 	else{
-		if(m_to_go <= dist2_goal){
+		if(m_to_go-safety_m_to_go <= dist2_goal){
 			if(m_to_go > 1){
 				moveWaypointForward(WP_GOAL, m_to_go-0.5);
 				VERBOSE_PRINT("Replace goal %f meters forward in stead of %f meters forward \n", m_to_go-0.5, dist2_goal);
@@ -301,13 +303,13 @@ void look_around(void){
 		first_look_around_loop = false;
 	}
 	if(ground_speed < 0.15){
-		int r = rand()%10; //Change 1 out of 10 that r == 1
+		int r = rand()%go_goal_chance; //Change 1 out of 10 that r == 1
 
 		if(safeToGoForwards){
 			safe_heading = true;
 			VERBOSE_PRINT("pixels to go = %d \n", pix_to_go);
 			VERBOSE_PRINT("meters to go = %f \n", m_to_go);
-			if(r==1 || confidence_level >= 1){
+			if(r==0 || confidence_level >= 1){
 				if(m_to_go >= best_distance){
 					best_distance = m_to_go;
 					moveWaypointForward(WP_GOAL, best_distance);
@@ -362,7 +364,7 @@ void choose_next_direction(void){
 
 // Function to set the heading of the drone a offset of 45 to 180 deg when arriving at the goal
 void set_scan_heading(void){
-	int r = rand() % 136;
+	int r = rand() % 91;
 	if(scan_direction == GO_RIGHT){
 		increase_nav_heading(&nav_heading, 45+r);
 		VERBOSE_PRINT("set heading RIGHT to %d \n", nav_heading);

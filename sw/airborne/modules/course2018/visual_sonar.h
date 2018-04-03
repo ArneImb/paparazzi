@@ -27,27 +27,27 @@
 #define VISUAL_SONAR_H
 
 #ifndef VISUAL_SONAR_MINY
-#define VISUAL_SONAR_MINY 59
+#define VISUAL_SONAR_MINY 65
 #endif
 
 #ifndef VISUAL_SONAR_MAXY
-#define VISUAL_SONAR_MAXY 116
+#define VISUAL_SONAR_MAXY 117
 #endif
 
 #ifndef VISUAL_SONAR_MINCB
-#define VISUAL_SONAR_MINCB 72
+#define VISUAL_SONAR_MINCB 111
 #endif
 
 #ifndef VISUAL_SONAR_MAXCB
-#define VISUAL_SONAR_MAXCB 96
+#define VISUAL_SONAR_MAXCB 132
 #endif
 
 #ifndef VISUAL_SONAR_MINCR
-#define VISUAL_SONAR_MINCR 111
+#define VISUAL_SONAR_MINCR 124
 #endif
 
 #ifndef VISUAL_SONAR_MAXCR
-#define VISUAL_SONAR_MAXCR 128
+#define VISUAL_SONAR_MAXCR 138
 #endif
 
 #ifndef VISUAL_SONAR_SQUARE_WIDTH
@@ -99,7 +99,7 @@
 #endif
 
 #ifndef PITCH_TO_PIX
-#define PITCH_TO_PIX 125
+#define PITCH_TO_PIX 25
 #endif
 
 #ifndef VISUAL_SONAR_MAX_HEIGHT
@@ -158,6 +158,9 @@ extern uint8_t scan_direction;
 extern uint8_t confidence_level;
 extern uint8_t first_look_around_loop;
 extern float square_height_factor;
+extern uint8_t go_goal_chance;
+
+extern float safety_m_to_go;
 
 extern struct video_listener *listener;
 
