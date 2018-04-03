@@ -89,7 +89,7 @@ uint8_t confidence_level;
 uint8_t first_look_around_loop = true;
 float square_height_factor = 1.15;
 float safety_m_to_go = 0.;
-uint8_t go_goal_chance = 1;
+uint8_t go_goal_chance = 2;
 
 
 // Function
@@ -263,7 +263,7 @@ void check_goal_heading(float heading_diff_limit)
 // Check if the drone has to stop for an obstacle or has to adjust it's forward position of the obstacle.
 void stop_obstacle(void){
 	if(pix_to_go <= 0){
-		moveWaypointForward(WP_GOAL, 0.5*ground_speed);
+		moveWaypointForward(WP_GOAL, 0.6*ground_speed);
 		status = STATUS_STOP;
 		VERBOSE_PRINT("Stop!! \n");
 	}
@@ -289,7 +289,7 @@ void compute_ground_speed(void){
 
 // Check if the drone is at the goal by checking speed and relative distance. Then the new scan heading is set.
 void check_at_goal(void){
-	if(dist2_goal<0.3 && ground_speed <0.15){
+	if(dist2_goal<0.4 && ground_speed <0.2){
 		choose_next_direction();
 		status = STATUS_SET_SCAN_HEADING;
 	}
@@ -329,7 +329,7 @@ void look_around(void){
 		}
 
 		else{
-			if(r == 1 && safe_heading){
+			if(r == 0 && safe_heading){
 				set_goal();
 			}
 			else{
